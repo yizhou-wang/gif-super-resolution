@@ -43,6 +43,9 @@ class PeriodicImageGenerator(keras.callbacks.Callback):
 
 if __name__=='__main__':
 
+  if not os.path.exists('../result'):
+    os.mkdir('../result')
+
     batch_size = 8
     epochs = 100
     hidden_units = 100

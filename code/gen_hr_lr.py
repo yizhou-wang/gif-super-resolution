@@ -12,6 +12,11 @@ def gen_hr_lr(png_dir='../data/raw_imgs/', tag='face', hr_dir='../data/hr_imgs/'
 	hr = (32, 32)
 	lr = (8, 8)
 
+	if not os.path.exists(hr_dir):
+		os.mkdir(hr_dir)
+	if not os.path.exists(lr_dir):
+		os.mkdir(lr_dir)
+
 	if not os.path.exists(hr_dir + tag):
 		os.mkdir(hr_dir + tag)
 	if not os.path.exists(lr_dir + tag):

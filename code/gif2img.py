@@ -14,6 +14,9 @@ def gif2img(gif_dir='../data/raw_gifs/', tag='face', png_dir='../data/raw_imgs/'
 
 	'''
 
+	if not os.path.exists(png_dir):
+		os.mkdir(png_dir)
+
 	if not os.path.exists(png_dir + tag):
 		os.mkdir(png_dir + tag)
 
@@ -80,3 +83,5 @@ if __name__ == '__main__':
 	PNG_DIR = '../data/raw_imgs/'
 
 	gif2img(GIF_DIR, TAG, PNG_DIR)
+
+	

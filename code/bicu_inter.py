@@ -12,6 +12,9 @@ def bicu_inter(lr_dir='../data/lr_imgs/', tag='face', bicu_dir='../data/bi_imgs/
 	hr = (32, 32)
 	lr = (8, 8)
 
+	if not os.path.exists(bicu_dir):
+		os.mkdir(bicu_dir)
+
 	if not os.path.exists(bicu_dir + tag):
 		os.mkdir(bicu_dir + tag)
 
@@ -34,9 +37,6 @@ def bicu_inter(lr_dir='../data/lr_imgs/', tag='face', bicu_dir='../data/bi_imgs/
 			im2 = cv2.resize(im1, dsize=hr, interpolation=cv2.INTER_CUBIC)
 			q = bicu_dir + p.split('/')[3] + '/' + p.split('/')[4] + '/' + p.split('/')[5]			
 			cv2.imwrite(q, im2)
-
-
-
 
 
 if __name__ == '__main__':
