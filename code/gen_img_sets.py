@@ -52,14 +52,15 @@ def gen_GT_HR_sets(path='../data/', tag='face'):
         print 'Folder check complete!'
 
     gif_id = []
+    frame_num = []
 
     for idx, gifFolder in enumerate(gtGIFs):
 
         # print idx, gifFolder
-
         gtImages = os.listdir(path + 'hr_imgs/' + tag + "/" + str(idx))
         lrImages = os.listdir(path + 'lr_imgs/' + tag + "/" + str(idx))
         hrImages = os.listdir(path + 'bi_imgs/' + tag + "/" + str(idx))
+        frame_num.append(len(gtImages))
 
         #Take up to 2nd to last image
         for pos in xrange(len(gtImages)-1):
@@ -98,8 +99,9 @@ def gen_GT_HR_sets(path='../data/', tag='face'):
             dataset.append(imageSet)
 
     # print gif_id
-    
-    return np.array(dataset), gif_id
+    # print len(frame_num)
+
+    return np.array(dataset), gif_id, frame_num
 
 def generate_GT_HR_attention_sets(path, steps=1):
         """

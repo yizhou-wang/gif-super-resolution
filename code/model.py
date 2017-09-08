@@ -10,11 +10,26 @@ from keras.layers.convolutional import Conv3D
 from keras.layers.convolutional_recurrent import ConvLSTM2D
 from keras import initializers
 from keras.optimizers import RMSprop, adam
+from keras import backend as K
 
 import os
 from PIL import Image
 import keras.callbacks
 import numpy as np
+
+# from tensorflow.python.client import device_lib
+# print(device_lib.list_local_devices())
+
+def PSNRLoss(y_true, y_pred):
+    """
+    PSNR is Peek Signal to Noise Ratio, which is similar to mean squared error.
+    It can be calculated as
+    PSNR = 20 * log10(MAXp) - 10 * log10(MSE)
+    When providing an unscaled input, MAXp = 255. Therefore 20 * log10(255)== 48.1308036087.
+    However, since we are scaling our input, MAXp = 1. Therefore 20 * log10(1) = 0.
+    Thus we remove that component completely and only compute the remaining MSE component.
+    """
+    return 20.0 * K.log(255.0) / K.log(10.0) - 10.0 * K.log(K.mean(K.square(y_pred - y_true))) / K.log(10.0)
 
 
 class PeriodicImageGenerator(keras.callbacks.Callback):
@@ -25,10 +40,10 @@ class PeriodicImageGenerator(keras.callbacks.Callback):
 
     def on_epoch_end(self, batch, logs={}):
         self.epochs += 1
-        if self.epochs % 25 == 0:
+        if self.epochs % 10 == 0:
             testVal = x_train[np.random.randint(len(x_train)-1)]
             image = Image.fromarray(testVal.astype('uint8'), 'RGB')
-            image.save('../result/image'+str(self.epochs)+'.jpg')
+            image.save('../result/image'+str(self.epochs)+'.png')
 
             testVal=testVal.reshape(1, height, width, channels)
 
@@ -36,7 +51,7 @@ class PeriodicImageGenerator(keras.callbacks.Callback):
             val=val.reshape(32,32,3)
             print("val: %s" % (val.astype('uint8')))
             image = Image.fromarray(val.astype('uint8'), 'RGB')
-            image.save('../result/image'+str(self.epochs)+'_predicted.jpg')
+            image.save('../result/image'+str(self.epochs)+'_predicted.png')
 
         model.save('../result/kerasModel_anshul_noAttn.h5')
             # Do stuff like printing metrics
@@ -61,12 +76,14 @@ if __name__=='__main__':
     # the data, shuffled and split between train and test sets
     print('Generating Dataset ...')
 
-    dataset, gif_id = gen_img_sets.gen_GT_HR_sets("../data/")
+    dataset, gif_id, frame_num = gen_img_sets.gen_GT_HR_sets("../data/")
     print('Dataset Generated!')
     print('dataset.shape =', dataset.shape)
+    # print('test size =', frame_num[-1])
 
-    x_train = dataset[:-10,:-1,:,:,:]; y_train = dataset[:-10,-1,:,:,:]
-    x_test = dataset[-10:,:-1,:,:,:]; y_test = dataset[-10:,-1,:,:,:]
+    # x_train = dataset[:-1*frame_num[-1],:-1,:,:,:]; y_train = dataset[:-1*frame_num[-1],-1,:,:,:]
+    x_train = dataset[:,:-1,:,:,:]; y_train = dataset[:,-1,:,:,:]
+    x_test = dataset[-1*frame_num[-1]:,:-1,:,:,:]; y_test = dataset[-1*frame_num[-1]:,-1,:,:,:]
     #x_train = x_train.reshape(x_train.shape[0],height,width,channels)
 
     #x_gt has all even column, x_hr has all odd, or vice-versa
@@ -134,7 +151,7 @@ if __name__=='__main__':
     rmsprop = RMSprop(lr=learning_rate)
     model.compile(loss='mean_squared_error',
                   optimizer=adam,
-                  metrics=['accuracy'])
+                  metrics=[PSNRLoss])
 
     model.fit(x_train, y_train,
               batch_size=batch_size,
@@ -148,14 +165,14 @@ if __name__=='__main__':
 
         testVal = x_test[i]
         image = Image.fromarray(testVal.astype('uint8'), 'RGB')
-        image.save('../result/image'+str(i)+'_Test.jpg')
+        image.save('../result/image'+str(i)+'_Test.png')
 
         testVal=testVal.reshape(1, height, width, channels)
 
         val=model.predict(testVal,1,verbose=1)
         val=val.reshape(32,32,3)
         image = Image.fromarray(val.astype('uint8'), 'RGB')
-        image.save('../result/image'+str(i)+'_Test_predicted.jpg')
+        image.save('../result/image'+str(i)+'_Test_predicted.png')
 
     # Save out model
     model.save('../result/kerasModel_anshul_noAttn.h5')
