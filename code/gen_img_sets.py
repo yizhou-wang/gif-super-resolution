@@ -51,6 +51,8 @@ def gen_GT_HR_sets(path='../data/', tag='face'):
     else:
         print 'Folder check complete!'
 
+    gif_id = []
+
     for idx, gifFolder in enumerate(gtGIFs):
 
         # print idx, gifFolder
@@ -61,6 +63,9 @@ def gen_GT_HR_sets(path='../data/', tag='face'):
 
         #Take up to 2nd to last image
         for pos in xrange(len(gtImages)-1):
+
+            gif_id.append(idx)
+
             gtImage = gtImages[pos]
             hrImage = hrImages[pos+1]
             gtImage2 = gtImages[pos+1]
@@ -92,7 +97,9 @@ def gen_GT_HR_sets(path='../data/', tag='face'):
 
             dataset.append(imageSet)
 
-    return np.array(dataset)
+    # print gif_id
+    
+    return np.array(dataset), gif_id
 
 def generate_GT_HR_attention_sets(path, steps=1):
         """

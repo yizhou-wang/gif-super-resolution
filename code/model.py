@@ -11,6 +11,7 @@ from keras.layers.convolutional_recurrent import ConvLSTM2D
 from keras import initializers
 from keras.optimizers import RMSprop, adam
 
+import os
 from PIL import Image
 import keras.callbacks
 import numpy as np
@@ -43,8 +44,8 @@ class PeriodicImageGenerator(keras.callbacks.Callback):
 
 if __name__=='__main__':
 
-  if not os.path.exists('../result'):
-    os.mkdir('../result')
+    if not os.path.exists('../result'):
+        os.mkdir('../result')
 
     batch_size = 8
     epochs = 100
@@ -60,7 +61,7 @@ if __name__=='__main__':
     # the data, shuffled and split between train and test sets
     print('Generating Dataset ...')
 
-    dataset = gen_img_sets.gen_GT_HR_sets("../data/")
+    dataset, gif_id = gen_img_sets.gen_GT_HR_sets("../data/")
     print('Dataset Generated!')
     print('dataset.shape =', dataset.shape)
 
