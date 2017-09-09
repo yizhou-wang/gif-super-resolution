@@ -20,6 +20,8 @@ import numpy as np
 # from tensorflow.python.client import device_lib
 # print(device_lib.list_local_devices())
 
+GIF_ID = []
+
 def PSNRLoss(y_true, y_pred):
     """
     PSNR is Peek Signal to Noise Ratio, which is similar to mean squared error.
@@ -39,11 +41,24 @@ class PeriodicImageGenerator(keras.callbacks.Callback):
         self.epochs = 0
 
     def on_epoch_end(self, batch, logs={}):
+
+        if not os.path.exists('../result/test_while_train'):
+            os.mkdir('../result/test_while_train')
+        if not os.path.exists('../result/test_while_train/in_imgs'):
+            os.mkdir('../result/test_while_train/in_imgs')
+        if not os.path.exists('../result/test_while_train/out_imgs'):
+            os.mkdir('../result/test_while_train/out_imgs')
+        if not os.path.exists('../result/model'):
+            os.mkdir('../result/model')
+
         self.epochs += 1
+
         if self.epochs % 10 == 0:
-            testVal = x_train[np.random.randint(len(x_train)-1)]
+            rand_id = np.random.randint(len(x_train)-1)
+            gif_id = GIF_ID[rand_id]
+            testVal = x_train[rand_id]
             image = Image.fromarray(testVal.astype('uint8'), 'RGB')
-            image.save('../result/image'+str(self.epochs)+'.png')
+            image.save('../result/test_while_train/in_imgs/' + str(gif_id) + '_' + str(self.epochs)+'.png')
 
             testVal=testVal.reshape(1, height, width, channels)
 
@@ -51,22 +66,24 @@ class PeriodicImageGenerator(keras.callbacks.Callback):
             val=val.reshape(32,32,3)
             print("val: %s" % (val.astype('uint8')))
             image = Image.fromarray(val.astype('uint8'), 'RGB')
-            image.save('../result/image'+str(self.epochs)+'_predicted.png')
+            image.save('../result/test_while_train/out_imgs/' + str(gif_id) + '_' + str(self.epochs)+'.png')
 
-        model.save('../result/kerasModel_anshul_noAttn.h5')
+        model.save('../result/model/while_train.h5')
             # Do stuff like printing metrics
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
     if not os.path.exists('../result'):
         os.mkdir('../result')
+    if not os.path.exists('../result/model'):
+        os.mkdir('../result/model')
 
     batch_size = 8
     epochs = 100
     hidden_units = 100
 
-    learning_rate = 1e-6
+    learning_rate = 1e-4
     clip_norm = 1.0
 
     height = 32
@@ -76,23 +93,27 @@ if __name__=='__main__':
     # the data, shuffled and split between train and test sets
     print('Generating Dataset ...')
 
-    dataset, gif_id, frame_num = gen_img_sets.gen_GT_HR_sets("../data/")
+    global GIF_ID
+    dataset, GIF_ID, frame_num = gen_img_sets.gen_GT_HR_sets("../data/")
     print('Dataset Generated!')
     print('dataset.shape =', dataset.shape)
-    # print('test size =', frame_num[-1])
+    test_size = frame_num[-1]
 
-    # x_train = dataset[:-1*frame_num[-1],:-1,:,:,:]; y_train = dataset[:-1*frame_num[-1],-1,:,:,:]
-    x_train = dataset[:,:-1,:,:,:]; y_train = dataset[:,-1,:,:,:]
-    x_test = dataset[-1*frame_num[-1]:,:-1,:,:,:]; y_test = dataset[-1*frame_num[-1]:,-1,:,:,:]
-    #x_train = x_train.reshape(x_train.shape[0],height,width,channels)
+    # x_train = dataset[:-1*test_size, :-1, :, :, :] 
+    # y_train = dataset[:-1*test_size, -1, :, :, :]
+    x_train = dataset[:, :-1, :, :, :]
+    y_train = dataset[:, -1, :, :, :]
+    x_test = dataset[-1*test_size:, :-1, :, :, :]
+    y_test = dataset[-1*test_size:, -1, :, :, :]
+    # x_train = x_train.reshape(x_train.shape[0],height,width,channels)
 
-    #x_gt has all even column, x_hr has all odd, or vice-versa
-    x_gt = x_train[:,0,:,:,:]
-    x_hr = x_train[:,1,:,:,:]
+    # x_gt has all even column, x_hr has all odd, or vice-versa
+    x_gt = x_train[:, 0, :, :, :]
+    x_hr = x_train[:, 1, :, :, :]
     x_train = np.insert(x_hr, np.arange(32), x_gt, axis=2)
 
-    x_gt = x_test[:,0,:,:,:]
-    x_hr = x_test[:,1,:,:,:]
+    x_gt = x_test[:, 0, :, :, :]
+    x_hr = x_test[:, 1, :, :, :]
     x_test = np.insert(x_hr, np.arange(32), x_gt, axis=2)
 
     print('x_train.shape =', x_train.shape)
@@ -105,7 +126,7 @@ if __name__=='__main__':
     input_shape = x_train.shape[1:]
     print('input.shape =', input_shape)
 
-    print('Evaluating...')
+    print('Training Model ...')
 
     PIG = PeriodicImageGenerator()
 
@@ -161,21 +182,28 @@ if __name__=='__main__':
               callbacks=[PIG])
 
     # Test model
+    if not os.path.exists('../result/final_test'):
+        os.mkdir('../result/final_test')
+    if not os.path.exists('../result/final_test/in_imgs'):
+        os.mkdir('../result/final_test/in_imgs')
+    if not os.path.exists('../result/final_test/out_imgs'):
+        os.mkdir('../result/final_test/out_imgs')
+
     for i in xrange(x_test.shape[0]):
 
         testVal = x_test[i]
         image = Image.fromarray(testVal.astype('uint8'), 'RGB')
-        image.save('../result/image'+str(i)+'_Test.png')
+        image.save('../result/final_test/in_imgs/test_' + str(i) + '.png')
 
         testVal=testVal.reshape(1, height, width, channels)
 
         val=model.predict(testVal,1,verbose=1)
         val=val.reshape(32,32,3)
         image = Image.fromarray(val.astype('uint8'), 'RGB')
-        image.save('../result/image'+str(i)+'_Test_predicted.png')
+        image.save('../result/final_test/out_imgs/test_' + str(i) + '.png')
 
     # Save out model
-    model.save('../result/kerasModel_anshul_noAttn.h5')
+    model.save('../result/model/final.h5')
 
 
 
