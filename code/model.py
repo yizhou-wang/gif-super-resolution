@@ -80,7 +80,7 @@ if __name__ == '__main__':
         os.mkdir('../result/model')
 
     batch_size = 8
-    epochs = 1000
+    epochs = 500
     hidden_units = 100
 
     learning_rate = 1e-3
