@@ -64,7 +64,7 @@ class PeriodicImageGenerator(keras.callbacks.Callback):
 
             val=model.predict(testVal,1,verbose=1)
             val=val.reshape(32,32,3)
-            print("val: %s" % (val.astype('uint8')))
+            # print("val: %s" % (val.astype('uint8')))
             image = Image.fromarray(val.astype('uint8'), 'RGB')
             image.save('../result/test_while_train/out_imgs/' + str(gif_id) + '_' + str(self.epochs)+'.png')
 
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     epochs = 100
     hidden_units = 100
 
-    learning_rate = 1e-4
+    learning_rate = 1e-3
     clip_norm = 1.0
 
     height = 32
@@ -99,10 +99,10 @@ if __name__ == '__main__':
     print('dataset.shape =', dataset.shape)
     test_size = frame_num[-1]
 
-    # x_train = dataset[:-1*test_size, :-1, :, :, :] 
-    # y_train = dataset[:-1*test_size, -1, :, :, :]
-    x_train = dataset[:, :-1, :, :, :]
-    y_train = dataset[:, -1, :, :, :]
+    x_train = dataset[:-1*test_size, :-1, :, :, :] 
+    y_train = dataset[:-1*test_size, -1, :, :, :]
+    # x_train = dataset[:, :-1, :, :, :]
+    # y_train = dataset[:, -1, :, :, :]
     x_test = dataset[-1*test_size:, :-1, :, :, :]
     y_test = dataset[-1*test_size:, -1, :, :, :]
     # x_train = x_train.reshape(x_train.shape[0],height,width,channels)
