@@ -20,7 +20,7 @@ import numpy as np
 # from tensorflow.python.client import device_lib
 # print(device_lib.list_local_devices())
 
-GIF_ID = []
+# GIF_ID = []
 
 def PSNRLoss(y_true, y_pred):
     """
