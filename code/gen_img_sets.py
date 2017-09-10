@@ -11,6 +11,10 @@ import os
 import string
 import re
 
+train_size = 1000
+test_size = 10
+
+
 def parse_args():
     """
     Handles input of folder with all gifs with different resolution images
@@ -34,19 +38,21 @@ def gen_GT_HR_sets(path='../data/', tag='face'):
     Returns:
     5-D Tensor with a list of sets of 3D matrices
     """
-    dataset = []
 
-    gtGIFs = glob.glob(path + 'hr_imgs/' + tag + "/*/")
-    gtGIFs.sort(key=lambda f: int(filter(str.isdigit, f)))
-    gtGIFs = gtGIFs[:1000]
+    hrGIFs = glob.glob(path + 'hr_imgs/' + tag + "/*/")
+    hrGIFs.sort(key=lambda f: int(filter(str.isdigit, f)))
+    hrGIFs_train = hrGIFs[:train_size]
+    hrGIFs_test = hrGIFs[train_size:train_size+test_size]
     lrGIFs = glob.glob(path + 'lr_imgs/' + tag + "/*/")
     lrGIFs.sort(key=lambda f: int(filter(str.isdigit, f)))
-    lrGIFs = lrGIFs[:1000]
-    hrGIFs = glob.glob(path + 'bi_imgs/' + tag + "/*/")
-    hrGIFs.sort(key=lambda f: int(filter(str.isdigit, f)))
-    hrGIFs = hrGIFs[:1000]
+    lrGIFs_train = lrGIFs[:train_size]
+    lrGIFs_test = lrGIFs[train_size:train_size+test_size]
+    srGIFs = glob.glob(path + 'bi_imgs/' + tag + "/*/")
+    srGIFs.sort(key=lambda f: int(filter(str.isdigit, f)))
+    srGIFs_train = srGIFs[:train_size]
+    srGIFs_test = srGIFs[train_size:train_size+test_size]
 
-    if not (len(gtGIFs) == len(lrGIFs) and len(lrGIFs) == len(hrGIFs)):
+    if not (len(hrGIFs) == len(lrGIFs) and len(lrGIFs) == len(srGIFs)):
         raise ValueError('GIF Imcomplete!')
     else:
         print 'Folder check complete!'
@@ -54,27 +60,30 @@ def gen_GT_HR_sets(path='../data/', tag='face'):
     gif_id = []
     frame_num = []
 
-    for idx, gifFolder in enumerate(gtGIFs):
+    print 'Generating Training Set ...'
+
+    train_dataset = []
+    for idx, gifFolder in enumerate(hrGIFs_train):
 
         # print idx, gifFolder
-        gtImages = os.listdir(path + 'hr_imgs/' + tag + "/" + str(idx))
-        lrImages = os.listdir(path + 'lr_imgs/' + tag + "/" + str(idx))
-        hrImages = os.listdir(path + 'bi_imgs/' + tag + "/" + str(idx))
-        frame_num.append(len(gtImages))
+        hrImages = os.listdir(path + 'hr_imgs/' + tag + "/" + str(idx))
+        srImages = os.listdir(path + 'bi_imgs/' + tag + "/" + str(idx))
+        frame_num.append(len(hrImages))
 
         #Take up to 2nd to last image
-        for pos in xrange(len(gtImages)-1):
+        for pos in xrange(len(hrImages)-2):
 
             gif_id.append(idx)
 
-            gtImage = gtImages[pos]
-            hrImage = hrImages[pos+1]
-            gtImage2 = gtImages[pos+1]
+            hrImage1 = hrImages[pos]
+            srImage = srImages[pos+1]
+            hrImage2 = hrImages[pos+2]
+            hrImage_y = hrImages[pos+1]
 
-            imageDir = [gtImage, hrImage, gtImage2]
+            imageDir = [hrImage1, srImage, hrImage2, hrImage_y]
             # print imageDir
             imageSet = imageDir
-            folderSet = ["hr_imgs","bi_imgs","hr_imgs"]
+            folderSet = ["hr_imgs", "bi_imgs", "hr_imgs", "hr_imgs"]
 
             # gtImage  = Image.open(path+"/"+gifFolder+"/"+"gt"+"/"+gtImage)
             # hrImage  = Image.open(path+"/"+gifFolder+"/"+"gt"+"/"+hrImage)
@@ -96,12 +105,45 @@ def gen_GT_HR_sets(path='../data/', tag='face'):
             # hrImage  = np.asarray(hrImage, dtype=np.float32)
             # gtImage2 = np.asarray(gtImage2, dtype=np.float32)
 
-            dataset.append(imageSet)
+            train_dataset.append(imageSet)
+
+    print 'Generating Test Set ...'
+
+    test_dataset = []
+    for idx, gifFolder in enumerate(srGIFs_test):
+
+        # print idx, gifFolder
+        hrImages = os.listdir(path + 'hr_imgs/' + tag + "/" + str(idx + train_size))
+        srImages = os.listdir(path + 'bi_imgs/' + tag + "/" + str(idx + train_size))
+        frame_num.append(len(srImages))
+
+        #Take up to 2nd to last image
+        for pos in xrange(len(srImages)-2):
+
+            gif_id.append(idx + train_size)
+
+            srImage1 = srImages[pos]
+            srImage = srImages[pos+1]
+            srImage2 = srImages[pos+2]
+            hrImage_y = hrImages[pos+1]
+
+            imageDir = [srImage1, srImage, srImage2, hrImage_y]
+            # print imageDir
+            imageSet = imageDir
+            folderSet = ["bi_imgs", "bi_imgs", "bi_imgs", "hr_imgs"]
+
+            for i, img in enumerate(imageDir):
+                # print path + folderSet[i] + '/' + tag + '/' + str(idx) + '/' + imageDir[i]
+                imageSet[i]=Image.open(path + folderSet[i] + '/' + tag + '/' + str(idx + train_size) + '/' + imageDir[i])
+                imageSet[i]=imageSet[i].convert('RGB')
+                imageSet[i]=np.asarray(imageSet[i], dtype=np.float32)
+
+            test_dataset.append(imageSet)
 
     # print gif_id
     # print len(frame_num)
 
-    return np.array(dataset), gif_id, frame_num
+    return np.array(train_dataset), np.array(test_dataset), gif_id, frame_num
 
 def generate_GT_HR_attention_sets(path, steps=1):
         """
@@ -176,6 +218,7 @@ def generate_GT_HR_attention_sets(path, steps=1):
         return np.array(dataset)
 
 if __name__=='__main__':
+
     args = parse_args()
     dataFolder = args.dataset
     generate_GT_HR_sets(dataFolder)

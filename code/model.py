@@ -22,7 +22,7 @@ import numpy as np
 
 # GIF_ID = []
 
-def PSNRLoss(y_true, y_pred):
+def PSNR(y_true, y_pred):
     """
     PSNR is Peek Signal to Noise Ratio, which is similar to mean squared error.
     It can be calculated as
@@ -80,51 +80,57 @@ if __name__ == '__main__':
         os.mkdir('../result/model')
 
     batch_size = 8
-    epochs = 500
+    epochs = 300
     hidden_units = 100
 
     learning_rate = 1e-3
     clip_norm = 1.0
 
     height = 32
-    width = 64
+    width = 96
     channels = 3
 
     # the data, shuffled and split between train and test sets
     print('Generating Dataset ...')
 
     global GIF_ID
-    dataset, GIF_ID, frame_num = gen_img_sets.gen_GT_HR_sets("../data/")
+    train_dataset, test_dataset, GIF_ID, frame_num = gen_img_sets.gen_GT_HR_sets("../data/")
     print('Dataset Generated!')
-    print('dataset.shape =', dataset.shape)
-    test_size = frame_num[-1]
 
-    x_train = dataset[:-1*test_size, :-1, :, :, :] 
-    y_train = dataset[:-1*test_size, -1, :, :, :]
-    # x_train = dataset[:, :-1, :, :, :]
-    # y_train = dataset[:, -1, :, :, :]
-    x_test = dataset[-1*test_size:, :-1, :, :, :]
-    y_test = dataset[-1*test_size:, -1, :, :, :]
-    # x_train = x_train.reshape(x_train.shape[0],height,width,channels)
+    # print('dataset.shape =', dataset.shape)
+    # test_size = frame_num[-1]
+    # x_train = dataset[:-1*test_size, :-1, :, :, :] 
+    # y_train = dataset[:-1*test_size, -1, :, :, :]
+    # x_test = dataset[-1*test_size:, :-1, :, :, :]
+    # y_test = dataset[-1*test_size:, -1, :, :, :]
+
+    x_train = train_dataset[:, :-1, :, :, :]
+    y_train = train_dataset[:, -1, :, :, :]
+    x_test = test_dataset[:, :-1, :, :, :]
+    y_test = test_dataset[:, -1, :, :, :]
 
     # x_gt has all even column, x_hr has all odd, or vice-versa
-    x_gt = x_train[:, 0, :, :, :]
-    x_hr = x_train[:, 1, :, :, :]
-    x_train = np.insert(x_hr, np.arange(32), x_gt, axis=2)
+    x_hr1 = x_train[:, 0, :, :, :]
+    x_sr = x_train[:, 1, :, :, :]
+    x_hr2 = x_train[:, 2, :, :, :]
+    x_tmp = np.insert(x_hr2, np.arange(32), x_sr, axis=2)
+    x_train = np.insert(x_tmp, 2 * np.arange(32), x_hr1, axis=2)
+    # x_train = np.insert(x_hr, np.arange(32), x_gt, axis=2)
 
-    x_gt = x_test[:, 0, :, :, :]
-    x_hr = x_test[:, 1, :, :, :]
-    x_test = np.insert(x_hr, np.arange(32), x_gt, axis=2)
+    x_hr1 = x_test[:, 0, :, :, :]
+    x_sr = x_test[:, 1, :, :, :]
+    x_hr2 = x_test[:, 2, :, :, :]
+    x_tmp = np.insert(x_hr2, np.arange(32), x_sr, axis=2)
+    x_test = np.insert(x_tmp, 2 * np.arange(32), x_hr1, axis=2)
 
     print('x_train.shape =', x_train.shape)
     print('x_test.shape =', x_test.shape)
     print('y_train.shape =', y_train.shape)
     print('y_test.shape =', y_test.shape)
 
-    testVal = x_train[0].reshape(1, height, width, channels)
+    # testVal = x_train[0].reshape(1, height, width, channels)
     # print(x_train[0].shape)
-    input_shape = x_train.shape[1:]
-    print('input.shape =', input_shape)
+    # input_shape = x_train.shape[1:]
 
     print('Training Model ...')
 
@@ -132,11 +138,13 @@ if __name__ == '__main__':
 
     model = Sequential()
 
+    # 4D input.
     row, col, pixel = x_train.shape[1:]
+    print('input.shape =', (row, col, pixel))
+    x = Input(shape=(row, col, pixel))
+
     row_hidden = 512
     col_hidden = 512
-    # 4D input.
-    x = Input(shape=(row, col, pixel))
 
     # Encodes a row of pixels using TimeDistributed Wrapper.
     encoded_rows = TimeDistributed(LSTM(row_hidden))(x)
@@ -148,7 +156,7 @@ if __name__ == '__main__':
                      activation='relu',
                      input_shape=(height,width,channels)))
     model.add(Dropout(0.15))
-    model.add(MaxPool2D(pool_size=(1,2)))
+    model.add(MaxPool2D(pool_size=(1,3)))
     model.add(Conv2D(32, (1, 1), activation='relu'))
     model.add(BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True, beta_initializer='zeros'))
     model.add(Conv2D(64, (1, 1), activation='relu'))
@@ -172,7 +180,8 @@ if __name__ == '__main__':
     rmsprop = RMSprop(lr=learning_rate)
     model.compile(loss='mean_squared_error',
                   optimizer=adam,
-                  metrics=[PSNRLoss])
+                  metrics=[PSNR])
+    model.summary()
 
     model.fit(x_train, y_train,
               batch_size=batch_size,
