@@ -80,7 +80,7 @@ if __name__ == '__main__':
         os.mkdir('../result/model')
 
     batch_size = 8
-    epochs = 300
+    epochs = 100
     hidden_units = 100
 
     learning_rate = 1e-3
@@ -155,12 +155,15 @@ if __name__ == '__main__':
     model.add(Conv2D(32, kernel_size=(1, 1),
                      activation='relu',
                      input_shape=(height,width,channels)))
+    model.add(Conv2D(64, (1, 1), activation='relu'))
+    model.add(Conv2D(128, (1, 1), activation='relu'))
+    model.add(BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True, beta_initializer='zeros'))
     model.add(Dropout(0.15))
     model.add(MaxPool2D(pool_size=(1,3)))
     model.add(Conv2D(32, (1, 1), activation='relu'))
-    model.add(BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True, beta_initializer='zeros'))
-    model.add(Conv2D(64, (1, 1), activation='relu'))
-    model.add(Conv2D(128, (1, 1), activation='relu'))
+    # model.add(BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True, beta_initializer='zeros'))
+    # model.add(Conv2D(64, (1, 1), activation='relu'))
+    # model.add(Conv2D(128, (1, 1), activation='relu'))
     model.add(SeparableConv2D(128, (1,1)))
     model.add(BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True, beta_initializer='zeros'))
     model.add(Conv2D(64, (1, 1), activation='relu'))
