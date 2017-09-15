@@ -15,16 +15,16 @@ python dnld_giphy.py 'face'
 python gif2img.py
 ```
 
-**`gen_hr_lr.py`:** Generate high-resolution (GT) and low-resolution (test input) images. HR images are stored in `data/hr_imgs/` and LR images are stored in `data/lr_imgs/`.
+**`code/gen_hr_lr.py`:** Generate high-resolution (GT) and low-resolution (test input) images. HR images are stored in `data/hr_imgs/` and LR images are stored in `data/lr_imgs/`.
 ```
 python gen_hr_lr.py
 ```
 
-**`bicu_inter.py`:** Generate Bicubic Interpolation of low-resolution images. BI images are stored in `data/bi_imgs/`.
+**`code/bicu_inter.py`:** Generate Bicubic Interpolation of low-resolution images. BI images are stored in `data/bi_imgs/`.
 ```
 python bicu_inter.py
 ```
 
-**`pr_sr.py`:** Implement PixelCNNs to do frame super-resolution.
+**`code/pr_sr.py`:** Implement PixelCNNs to do frame super-resolution.
 
 **`tem_model.py`:** Run temporal regularization network.
