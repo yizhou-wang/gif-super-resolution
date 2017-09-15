@@ -27,4 +27,4 @@ python bicu_inter.py
 
 **`code/pr_sr.py`:** Implement PixelCNNs to do frame super-resolution.
 
-**`tem_model.py`:** Run temporal regularization network.
+**`code/tem_model.py`:** Run temporal regularization network.
