@@ -15,3 +15,8 @@ python dnld_giphy.py 'face'
 python gif2img.py
 ```
 Convert all GIFs tagged 'face' in `data/raw_gifs/` to PNG images and store into `data/raw_imgs/`.
+
+**`gen_hr_lr.py`:** Generate high-resolution (GT) and low-resolution (test input) images.
+```
+python gen_hr_lr.py
+```
