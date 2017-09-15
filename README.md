@@ -20,3 +20,10 @@ Convert all GIFs tagged 'face' in `data/raw_gifs/` to PNG images and store into 
 ```
 python gen_hr_lr.py
 ```
+HR images are stored in `data/hr_imgs/` and LR images are stored in `data/lr_imgs/`
+
+**`bicu_inter.py`:** Generate Bicubic Interpolation of low-resolution images.
+```
+python bicu_inter.py
+```
+BI images are stored in `data/bi_imgs/`
