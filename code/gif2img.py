@@ -41,7 +41,12 @@ def gif2img(gif_dir='../data/raw_gifs/', tag='face', png_dir='../data/raw_imgs/'
 
 
 
-def img2gif(png_dir='../data/rec_imgs/', tag='face', gif_dir='../data/rec_gifs/'):
+def img2gif(
+	png_dir='../data/rec_imgs/', 
+	gif_dir='../data/rec_gifs/', 
+	gt_dir='../data/hr_imgs/', 
+	bi_dir='../data/bi_imgs/', 
+	tag='face', train_size=1000):
 	"""
 	Converts png frames to gif with each png containing the full image data
 
@@ -50,26 +55,25 @@ def img2gif(png_dir='../data/rec_imgs/', tag='face', gif_dir='../data/rec_gifs/'
 
 	"""
 
-	png_list = glob.glob(png_dir + tag)
-	png_list.sort(key=lambda f: int(filter(str.isdigit, f)))
+	gt_dir = gt_dir + tag + '/'
+	bi_dir = bi_dir + tag + '/'
+	gif_list = glob.glob(png_dir)
+	gif_list.sort(key=lambda f: int(filter(str.isdigit, f)))
 
-	if os.path.exists(png_dir):
-		boo = raw_input("recovered gifs already exist, overwrite? : y/n -> ")
-		if boo is 'y':
-			shutil.rmtree(png_dir)
-			os.mkdir(png_dir)
-	else:
-		os.mkdir(png_dir)
+	if not os.path.exists(gif_dir):
+		os.mkdir(gif_dir)
 
-	for i in range(len(gif_dir)):
-		print("Recovering %d.gif"%(i))
-		png_path=split_path+str(i)+"/"
-		pngList=glob.glob(png_path+"*.jpg")
-		frames = len(pngList)
-		original_gif=Image.open(gif_dir[i])
-		delay = original_gif.info['duration']/10.0
-		# May need to modify the paths.
-		call(["convert","-delay",str(delay),"-loop","0",png_path+"/000*.jpg", png_dir+"/"+str(i)+".gif"])
+	print("Recovering GIF ...")
+	# png_path=split_path+str(i)+"/"
+	# plist = glob.glob(png_path + "*.png")
+	# frames = len(plist)
+	# original_gif = Image.open(gif_dir[i])
+	# delay = original_gif.info['duration']/10.0
+	# May need to modify the paths.
+	for idx, gif_name in enumerate(gif_list):
+		call(["convert", "-delay", str(0.2), "-loop", "0", gt_dir + str(idx+train_size) + "/*.png", gif_dir + "/" + str(idx+train_size) + "_gt.gif"])
+		call(["convert", "-delay", str(0.2), "-loop", "0", bi_dir + str(idx+train_size) + "/*.png", gif_dir + "/" + str(idx+train_size) + "_bi.gif"])
+		call(["convert", "-delay", str(0.2), "-loop", "0", gif_name + "/*.png", gif_dir + str(idx+train_size) + "_rec.gif"])
 
 	print "Done with recovering."
 
