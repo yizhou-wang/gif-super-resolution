@@ -28,3 +28,10 @@ python bicu_inter.py
 **`code/pr_sr.py`:** Implement PixelCNNs to do frame super-resolution.
 
 **`code/tem_model.py`:** Run temporal regularization network.
+
+### Train PixelCNN++ Model
+
+Generate image list.
+```
+python prsr/tools/create_img_lists.py --dataset=../data/hr_imgs --trainfile=../data/train.txt --testfile=../data/test.txt
+```

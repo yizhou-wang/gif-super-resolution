@@ -25,20 +25,21 @@ if not os.path.exists('../result/prsr/samples'):
 #solver
 flags.DEFINE_string("train_dir", "../result/prsr/models", "trained model save path")
 flags.DEFINE_string("samples_dir", "../result/prsr/samples", "sampled images save path")
-flags.DEFINE_string("imgs_list_path", "../data/train.txt", "images list file path")
+flags.DEFINE_string("train_imgs_path", "../data/train.txt", "images list file path")
+flags.DEFINE_string("test_imgs_path", "../data/train.txt", "images list file path")
 
 flags.DEFINE_boolean("use_gpu", True, "whether to use gpu for training")
 flags.DEFINE_integer("device_id", 0, "gpu device id")
 
-flags.DEFINE_integer("num_epoch", 16, "train epoch num")
+flags.DEFINE_integer("num_epoch", 8, "train epoch num")
 flags.DEFINE_integer("batch_size", 32, "batch_size")
 
-print("size of batch:",flags.FLAGS.batch_size)
+# print("size of batch:",flags.FLAGS.batch_size)
 
 data_file = "../data/train.txt"
 s = file_len(data_file)
 flags.DEFINE_integer("file_length", s, "file_length")
-print("number of images for training: ", s)
+# print("number of images for training: ", s)
 # flags.DEFINE_integer("dataset_size", s, "size of dataset")
 
 flags.DEFINE_integer("size_hr", 32, "size of high resolution images")

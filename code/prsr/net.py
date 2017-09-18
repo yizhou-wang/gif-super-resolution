@@ -7,6 +7,7 @@ import numpy as np
 from ops import *
 
 class Net(object):
+
   def __init__(self, hr_images, lr_images, scope):
     """
     Args:[0, 255]
@@ -16,6 +17,7 @@ class Net(object):
     with tf.variable_scope(scope) as scope:
       self.train = tf.placeholder(tf.bool)
       self.construct_net(hr_images, lr_images)
+
   def prior_network(self, hr_images):
     """
     Args:[-0.5, 0.5]
@@ -66,6 +68,7 @@ class Net(object):
     labels = tf.reshape(labels, [-1])
     return tf.losses.sparse_softmax_cross_entropy(
            labels, logits)
+
   def construct_net(self, hr_images, lr_images):
     """
     Args: [0, 255]
@@ -85,3 +88,5 @@ class Net(object):
     self.loss = loss1 + loss2
     tf.summary.scalar('loss', self.loss)
     tf.summary.scalar('loss_prior', loss3)
+
+    
