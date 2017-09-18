@@ -10,6 +10,8 @@ python dnld_giphy.py 'face'
 
 ## Run Code
 
+### Core Scripts
+
 **`code/gif2img.py`:** Convert GIFs into PNG images. Convert all GIFs tagged 'face' in `data/raw_gifs/` to PNG images and store into `data/raw_imgs/`.
 ```
 python gif2img.py
