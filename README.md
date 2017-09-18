@@ -35,3 +35,11 @@ Generate image list.
 ```
 python prsr/tools/create_img_lists.py --dataset=../data/hr_imgs --trainfile=../data/train.txt --testfile=../data/test.txt
 ```
+Train model.
+```
+python prsr/tools/train.py --device_id=0
+```
+Run test images.
+```
+python prsr/tools/test.py --device_id=0
+```
