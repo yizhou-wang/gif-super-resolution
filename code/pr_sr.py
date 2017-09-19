@@ -5,3 +5,5 @@ os.system('python prsr/tools/create_img_lists.py --dataset=../data/hr_imgs --tra
 print 'Image list created!'
 print 'Training ...'
 os.system('python prsr/tools/train.py --device_id=0')
+print 'Testing ...'
+os.system('python prsr/tools/test.py --device_id=0')

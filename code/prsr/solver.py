@@ -102,7 +102,7 @@ class Solver(object):
         gen_hr_imgs = np.zeros((self.batch_size, 32, 32, 3), dtype=np.float32)
         #gen_hr_imgs = np_hr_imgs
         #gen_hr_imgs[:,16:,16:,:] = 0.0
-        np_c_logits = sess.run(c_logits, feed_dict={lr_imgs: np_lr_imgs, self.net.train:False})
+        np_c_logits = sess.run(c_logits, feed_dict={lr_imgs: np_lr_imgs, self.net.train: False})
         print('iters %d: ' % step)
         
         for i in range(32):
@@ -117,49 +117,30 @@ class Solver(object):
         save_samples(gen_hr_imgs, self.samples_dir + '/generate_' + str(mu*10) + '_' + str(step) + '.jpg')
 
     def test(self):
-        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-        summary_op = tf.summary.merge_all()
-        saver = tf.train.Saver()
-        # Create a session for running operations in the Graph.
-        config = tf.ConfigProto(allow_soft_placement=True)
-        config.gpu_options.allow_growth = True
-        sess = tf.Session(config=config)
 
-        # Initialize the variables (like the epoch counter).
-        sess.run(init_op)
-        #saver.restore(sess, './models/model.ckpt-30000')
-        summary_writer = tf.summary.FileWriter(self.train_dir, sess.graph)
-        # Start input enqueue threads.
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-        iters = 0
-        try:
-            while not coord.should_stop():
-                # Run training steps or whatever
-                # t1 = time.time()
-                # _, loss = sess.run([self.train_op, self.net.loss], feed_dict={self.net.train: True})
-                # t2 = time.time()
-                # print('step %d, loss = %.2f (%.1f examples/sec; %.3f sec/batch)' % ((iters, loss, self.batch_size/(t2-t1), (t2-t1))))
-                iters += 1
-                if iters % 10 == 0:
-                    summary_str = sess.run(summary_op, feed_dict={self.net.train: True})
-                    summary_writer.add_summary(summary_str, iters)
-                if iters % 1000 == 0:
-                    #self.sample(sess, mu=1.0, step=iters)
-                    self.sample(sess, mu=1.1, step=iters)
-                    #self.sample(sess, mu=100, step=iters)
-                if iters % 10000 == 0:
-                    checkpoint_path = os.path.join(self.train_dir, 'model.ckpt')
-                    saver.save(sess, checkpoint_path, global_step=iters)
-        except tf.errors.OutOfRangeError:
-            checkpoint_path = os.path.join(self.train_dir, 'model.ckpt')
-            saver.save(sess, checkpoint_path)
-            print('Done training -- epoch limit reached')
-        finally:
-            # When done, ask the threads to stop.
-            coord.request_stop()
+        with tf.Session() as sess:
+            saver = tf.train.import_meta_graph(flags.train_dir + '/model.ckpt.meta')
+            saver.restore(sess, tf.train.latest_checkpoint(flags.train_dir))
 
-        # Wait for threads to finish.
-        coord.join(threads)
-        sess.close()
+            c_logits = self.net.conditioning_logits
+            p_logits = self.net.prior_logits
+            lr_imgs = self.test_dataset.lr_images
+            hr_imgs = self.test_dataset.hr_images
+            np_hr_imgs, np_lr_imgs = sess.run([hr_imgs, lr_imgs])
+            gen_hr_imgs = np.zeros((self.batch_size, 32, 32, 3), dtype=np.float32)
+            #gen_hr_imgs = np_hr_imgs
+            #gen_hr_imgs[:,16:,16:,:] = 0.0
+            np_c_logits = sess.run(c_logits, feed_dict={lr_imgs: np_lr_imgs, self.net.train: False})
+            print('iters %d: ' % step)
+            
+            for i in range(32):
+                for j in range(32):
+                    for c in range(3):
+                        np_p_logits = sess.run(p_logits, feed_dict={hr_imgs: gen_hr_imgs})
+                        new_pixel = logits_2_pixel_value(np_c_logits[:, i, j, c*256:(c+1)*256] + np_p_logits[:, i, j, c*256:(c+1)*256], mu=mu)
+                        gen_hr_imgs[:, i, j, c] = new_pixel
+            #
+            save_samples(np_lr_imgs, self.samples_dir + '/lr_' + str(mu*10) + '_' + str(step) + '.jpg')
+            save_samples(np_hr_imgs, self.samples_dir + '/hr_' + str(mu*10) + '_' + str(step) + '.jpg')
+            save_samples(gen_hr_imgs, self.samples_dir + '/generate_' + str(mu*10) + '_' + str(step) + '.jpg')
 
