@@ -21,10 +21,14 @@ if not os.path.exists('../result/prsr/models'):
 	os.mkdir('../result/prsr/models')
 if not os.path.exists('../result/prsr/samples'):
 	os.mkdir('../result/prsr/samples')
+if not os.path.exists('../data/pxl_imgs'):
+	os.mkdir('../data/pxl_imgs')
 
 #solver
 flags.DEFINE_string("train_dir", "../result/prsr/models", "trained model save path")
 flags.DEFINE_string("samples_dir", "../result/prsr/samples", "sampled images save path")
+flags.DEFINE_string("test_dir", "../data/pxl_imgs", "tested images save path")
+
 flags.DEFINE_string("train_imgs_path", "../data/train.txt", "images list file path")
 flags.DEFINE_string("test_imgs_path", "../data/train.txt", "images list file path")
 
@@ -52,10 +56,9 @@ conf = flags.FLAGS
 
 def main(_):
 	solver = Solver()
-	init_op = tf.initialize_all_variables()
-	# sess = tf.Session()
-	sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True))
-	sess.run(init_op)  	
+	# init_op = tf.initialize_all_variables()
+	# sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True))
+	# sess.run(init_op)  	
 	solver.train()
 
 if __name__ == '__main__':

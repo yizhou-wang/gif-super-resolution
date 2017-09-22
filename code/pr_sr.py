@@ -6,4 +6,4 @@ print 'Image list created!'
 print 'Training ...'
 os.system('python prsr/tools/train.py --device_id=0')
 print 'Testing ...'
-os.system('python prsr/tools/test.py --device_id=0')
+# os.system('python prsr/tools/test.py --device_id=0')

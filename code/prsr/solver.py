@@ -20,6 +20,7 @@ class Solver(object):
         self.device_id = conf.device_id
         self.train_dir = conf.train_dir
         self.samples_dir = conf.samples_dir
+        self.test_dir = conf.test_dir
         if not os.path.exists(self.train_dir):
             os.makedirs(self.train_dir)
         if not os.path.exists(self.samples_dir):
@@ -37,7 +38,11 @@ class Solver(object):
             #dataset
             self.train_dataset = DataSet('train', conf.train_imgs_path, self.num_epoch, self.batch_size)
             self.test_dataset = DataSet('test', conf.test_imgs_path, self.num_epoch, self.batch_size)
-            self.net = Net(self.train_dataset.hr_images, self.train_dataset.lr_images, 'prsr')
+            self.gen_hr_imgs = tf.stack(np.zeros((self.batch_size, 32, 32, 3), dtype=np.float32))
+            # print('train_dataset_lr SHAPE =', (self.train_dataset.lr_images).get_shape())
+            # print('train_dataset_hr SHAPE =', (self.train_dataset.hr_images).get_shape())
+            # print('gen_hr_imgs SHAPE =', (gen_hr_imgs).get_shape())
+            self.net = Net(self.train_dataset.hr_images, self.train_dataset.lr_images, self.test_dataset.hr_images, self.test_dataset.lr_images, self.gen_hr_imgs, 'prsr')
             #optimizer
             self.global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
             # selrf.global_step = 100
@@ -74,9 +79,11 @@ class Solver(object):
                 if iters % 10 == 0:
                     summary_str = sess.run(summary_op, feed_dict={self.net.train: True})
                     summary_writer.add_summary(summary_str, iters)
+                    self.test_while_train(sess, mu=1.1, step=iters)
                 if iters % 1000 == 0:
                     #self.sample(sess, mu=1.0, step=iters)
                     self.sample(sess, mu=1.1, step=iters)
+                    # self.test_while_train(sess, mu=1.1, step=iters)
                     #self.sample(sess, mu=100, step=iters)
                 if iters % 10000 == 0:
                     checkpoint_path = os.path.join(self.train_dir, 'model.ckpt')
@@ -94,6 +101,7 @@ class Solver(object):
         sess.close()
 
     def sample(self, sess, mu=1.1, step=None):
+
         c_logits = self.net.conditioning_logits
         p_logits = self.net.prior_logits
         lr_imgs = self.train_dataset.lr_images
@@ -102,8 +110,76 @@ class Solver(object):
         gen_hr_imgs = np.zeros((self.batch_size, 32, 32, 3), dtype=np.float32)
         #gen_hr_imgs = np_hr_imgs
         #gen_hr_imgs[:,16:,16:,:] = 0.0
-        np_c_logits = sess.run(c_logits, feed_dict={lr_imgs: np_lr_imgs, self.net.train: False})
+        np_c_logits = sess.run(c_logits, feed_dict={self.net.train: True})
         print('iters %d: ' % step)
+        
+        for i in range(32):
+            for j in range(32):
+                for c in range(3):
+                    np_p_logits = sess.run(p_logits, feed_dict={self.net.train: True})
+                    new_pixel = logits_2_pixel_value(np_c_logits[:, i, j, c*256:(c+1)*256] + np_p_logits[:, i, j, c*256:(c+1)*256], mu=mu)
+                    gen_hr_imgs[:, i, j, c] = new_pixel
+        
+        save_samples(np_lr_imgs, self.samples_dir + '/lr_' + str(mu*10) + '_' + str(step) + '.jpg')
+        save_samples(np_hr_imgs, self.samples_dir + '/hr_' + str(mu*10) + '_' + str(step) + '.jpg')
+        save_samples(gen_hr_imgs, self.samples_dir + '/generate_' + str(mu*10) + '_' + str(step) + '.jpg')
+
+    def test_while_train(self, sess, mu=1.1, step=None):
+
+        c_logits = self.net.conditioning_logits
+        p_logits = self.net.prior_logits
+        lr_imgs = self.test_dataset.lr_images
+        hr_imgs = self.test_dataset.hr_images
+        np_hr_imgs, np_lr_imgs = sess.run([hr_imgs, lr_imgs])
+        gen_hr_imgs = np.zeros((self.batch_size, 32, 32, 3), dtype=np.float32)
+        #gen_hr_imgs = np_hr_imgs
+        #gen_hr_imgs[:,16:,16:,:] = 0.0
+        print(np_lr_imgs.shape)
+        np_c_logits = sess.run(c_logits, feed_dict={self.net.train: False})
+        print(np_c_logits.shape)
+        print('iters %d: ' % step)
+        
+        for i in range(32):
+            for j in range(32):
+                for c in range(3):
+                    print(i,j,c)
+                    np_p_logits = sess.run(p_logits, feed_dict={self.net.train: False})
+                    new_pixel = logits_2_pixel_value(np_c_logits[:, i, j, c*256:(c+1)*256] + np_p_logits[:, i, j, c*256:(c+1)*256], mu=mu)
+                    gen_hr_imgs[:, i, j, c] = new_pixel
+
+        save_img(np_lr_imgs, self.test_dir + '/lr_' + str(mu*10) + '_' + str(step) + '.jpg')
+        save_img(np_hr_imgs, self.test_dir + '/hr_' + str(mu*10) + '_' + str(step) + '.jpg')
+        save_img(gen_hr_imgs, self.test_dir + '/generate_' + str(mu*10) + '_' + str(step) + '.jpg')
+
+    def test(self):
+        # Create a session for running operations in the Graph.
+        config = tf.ConfigProto(allow_soft_placement=True)
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(config=config)
+
+        print(conf.train_dir + '/model.ckpt-10000.meta')
+        saver = tf.train.import_meta_graph(conf.train_dir + '/model.ckpt-10000.meta')
+        print(conf.train_dir + '/model.ckpt-10000')
+        # saver.restore(sess, tf.train.latest_checkpoint(conf.train_dir))
+        saver.restore(sess, conf.train_dir + '/model.ckpt-10000')
+
+        print('FLAG!!!')
+        c_logits = self.net.conditioning_logits
+        print('FLAG1111')
+        p_logits = self.net.prior_logits
+        print('FLAG2222')
+        lr_imgs = self.test_dataset.lr_images
+        print('FLAG3333')
+        hr_imgs = self.test_dataset.hr_images
+        print('FLAG4444')
+        np_hr_imgs, np_lr_imgs = sess.run([hr_imgs, lr_imgs])
+        print('FLAG5555')
+        gen_hr_imgs = np.zeros((self.batch_size, 32, 32, 3), dtype=np.float32)
+        #gen_hr_imgs = np_hr_imgs
+        #gen_hr_imgs[:,16:,16:,:] = 0.0
+        print(np_lr_imgs,shape)
+        np_c_logits = sess.run(c_logits, feed_dict={lr_imgs: np_lr_imgs, self.net.train: False})
+        # print('iters %d: ' % step)
         
         for i in range(32):
             for j in range(32):
@@ -112,35 +188,9 @@ class Solver(object):
                     new_pixel = logits_2_pixel_value(np_c_logits[:, i, j, c*256:(c+1)*256] + np_p_logits[:, i, j, c*256:(c+1)*256], mu=mu)
                     gen_hr_imgs[:, i, j, c] = new_pixel
         #
-        save_samples(np_lr_imgs, self.samples_dir + '/lr_' + str(mu*10) + '_' + str(step) + '.jpg')
-        save_samples(np_hr_imgs, self.samples_dir + '/hr_' + str(mu*10) + '_' + str(step) + '.jpg')
-        save_samples(gen_hr_imgs, self.samples_dir + '/generate_' + str(mu*10) + '_' + str(step) + '.jpg')
+        save_samples(np_lr_imgs, self.test_dir + '/lr_' + str(mu*10) + '_' + str(step) + '.jpg')
+        save_samples(np_hr_imgs, self.test_dir + '/hr_' + str(mu*10) + '_' + str(step) + '.jpg')
+        save_samples(gen_hr_imgs, self.test_dir + '/generate_' + str(mu*10) + '_' + str(step) + '.jpg')
 
-    def test(self):
-
-        with tf.Session() as sess:
-            saver = tf.train.import_meta_graph(flags.train_dir + '/model.ckpt.meta')
-            saver.restore(sess, tf.train.latest_checkpoint(flags.train_dir))
-
-            c_logits = self.net.conditioning_logits
-            p_logits = self.net.prior_logits
-            lr_imgs = self.test_dataset.lr_images
-            hr_imgs = self.test_dataset.hr_images
-            np_hr_imgs, np_lr_imgs = sess.run([hr_imgs, lr_imgs])
-            gen_hr_imgs = np.zeros((self.batch_size, 32, 32, 3), dtype=np.float32)
-            #gen_hr_imgs = np_hr_imgs
-            #gen_hr_imgs[:,16:,16:,:] = 0.0
-            np_c_logits = sess.run(c_logits, feed_dict={lr_imgs: np_lr_imgs, self.net.train: False})
-            print('iters %d: ' % step)
-            
-            for i in range(32):
-                for j in range(32):
-                    for c in range(3):
-                        np_p_logits = sess.run(p_logits, feed_dict={hr_imgs: gen_hr_imgs})
-                        new_pixel = logits_2_pixel_value(np_c_logits[:, i, j, c*256:(c+1)*256] + np_p_logits[:, i, j, c*256:(c+1)*256], mu=mu)
-                        gen_hr_imgs[:, i, j, c] = new_pixel
-            #
-            save_samples(np_lr_imgs, self.samples_dir + '/lr_' + str(mu*10) + '_' + str(step) + '.jpg')
-            save_samples(np_hr_imgs, self.samples_dir + '/hr_' + str(mu*10) + '_' + str(step) + '.jpg')
-            save_samples(gen_hr_imgs, self.samples_dir + '/generate_' + str(mu*10) + '_' + str(step) + '.jpg')
+        sess.close()
 
