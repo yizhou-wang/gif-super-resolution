@@ -31,13 +31,10 @@ def save_img(np_imgs, img_path):
   """
   np_imgs = np_imgs.astype(np.uint8)
   N, H, W, _ = np_imgs.shape
-  num = 1
-  merge_img = np.zeros((num * H, num * W, 3), dtype=np.uint8)
-  for i in range(num):
-    for j in range(num):
-      merge_img[i*H:(i+1)*H, j*W:(j+1)*W, :] = np_imgs[i*num+j,:,:,:]
-
-  imsave(img_path, merge_img)
+  merge_img = np.zeros((H, W, 3), dtype=np.uint8)
+  for i in range(N):
+    merge_img = np_imgs[i,:,:,:]
+    imsave(img_path + '_' + str(i) + '.jpg', merge_img)
 
 
 def logits_2_pixel_value(logits, mu=1.1):

@@ -28,12 +28,12 @@ class DataSet(object):
             hr_image = tf.cast(hr_image, tf.float32)
             lr_image = tf.image.resize_images(image, [8, 8])
             lr_image = tf.cast(lr_image, tf.float32)
-            self.hr_images, self.lr_images = tf.train.shuffle_batch([hr_image, lr_image], batch_size=batch_size, capacity=capacity,
-                min_after_dequeue=min_after_dequeue)
+            # self.hr_images, self.lr_images = tf.train.shuffle_batch([hr_image, lr_image], batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+            self.hr_images, self.lr_images = tf.train.batch([hr_image, lr_image], batch_size=batch_size, capacity=capacity)
 
         if data_id == 'test':
 
-            filename_queue = tf.train.string_input_producer(self.record_list, num_epochs=1)
+            filename_queue = tf.train.string_input_producer(self.record_list, num_epochs=num_epoch)
             image_reader = tf.WholeFileReader()
             _, image_file = image_reader.read(filename_queue)
             image = tf.image.decode_jpeg(image_file, channels=3)
@@ -44,5 +44,6 @@ class DataSet(object):
             lr_image = tf.cast(lr_image, tf.float32)
             # self.hr_images = hr_image
             # self.lr_images = lr_image
+            # self.hr_images, self.lr_images = tf.train.batch([hr_image, lr_image], batch_size=batch_size, capacity=capacity)
             self.hr_images, self.lr_images = tf.train.batch([hr_image, lr_image], batch_size=batch_size, capacity=capacity)
             
