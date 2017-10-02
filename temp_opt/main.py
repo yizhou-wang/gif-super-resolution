@@ -34,7 +34,6 @@ def load_bi_gif(bi_dir='../data/bi_imgs/', tag='face', number='999'):
 
     return data_bi_gif
 
-
 def GD(x, y, theta, alpha, m, numIterations):
     xTrans = x.transpose()
     for i in range(0, numIterations):
@@ -57,8 +56,8 @@ if __name__ == '__main__':
     Step 1: Read images.
         'data_lr_gif':  read lr GIF in a array (frame X 8 X 8 X 3)
     '''
-    data_lr_gif = load_lr_gif()
-    # data_lr_gif = load_lr_gif(lr_dir='../../data/lr_imgs/')
+    # data_lr_gif = load_lr_gif()
+    data_lr_gif = load_lr_gif(lr_dir='../../data/lr_imgs/')
     print 'data_lr_gif =', data_lr_gif.shape
 
     '''
@@ -67,8 +66,8 @@ if __name__ == '__main__':
         'alpha':    coefficients of interpolation function (frame X 32 X 32)
                     (each alpha: 4 X 4, 8 X 8 alphas for each frame)
     '''
-    data_bi_gif = load_bi_gif()
-    # data_bi_gif = load_bi_gif(bi_dir='../../data/bi_imgs/')
+    # data_bi_gif = load_bi_gif()
+    data_bi_gif = load_bi_gif(bi_dir='../../data/bi_imgs/')
     print 'data_bi_gif =', data_bi_gif.shape
 
 
@@ -79,5 +78,5 @@ if __name__ == '__main__':
         - Next iteration
     '''
 
-    
+
 
