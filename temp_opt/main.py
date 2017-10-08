@@ -1,8 +1,7 @@
 import glob
 import numpy as np
 import scipy.ndimage
-from scipy.signal import butter, lfilter, freqz
-import matplotlib.pyplot as plt
+import cv2
 
 hr = 32
 lr = 8
@@ -34,29 +33,6 @@ def load_bi_gif(bi_dir='../data/bi_imgs/', tag='face', number='999'):
 
     return data_bi_gif
 
-def butter_lowpass(cutoff, fs, order=5):
-    nyq = 0.5 * fs
-    normal_cutoff = cutoff / nyq
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    return b, a
-
-def butter_lowpass_filter(data, cutoff, fs, order=5):
-    b, a = butter_lowpass(cutoff, fs, order=order)
-    y = lfilter(b, a, data)
-    return y
-
-def temp_filter(data_gif):
-    order = 6
-    fs = 30.0       # sample rate, Hz
-    cutoff = 3.667  # desired cutoff frequency of the filter, Hz
-    shape = data_gif.shape
-    T = shape[0]
-    data_tf_gif = data_gif
-    for i in range(shape[1]):
-        for j in range(shape[2]):
-            for k in range(shape[3]):
-                data_tf_gif[:, i, j, k] = butter_lowpass_filter(data_gif[:, i, j, k], cutoff, fs, order)
-    return data_tf_gif
 
 def GD(x, y, theta, alpha, m, numIterations):
     xTrans = x.transpose()
@@ -92,7 +68,7 @@ if __name__ == '__main__':
     # data_bi_gif = load_bi_gif()
     data_bi_gif = load_bi_gif(bi_dir='../../data/bi_imgs/')
     print 'data_bi_gif =', data_bi_gif.shape
-
+    optical_flow(data_bi_gif)
     data_tf_gif = temp_filter(data_bi_gif)
 
     '''
