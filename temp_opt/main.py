@@ -1,5 +1,6 @@
 import glob
 import numpy as np
+import numpy.linalg
 import scipy.ndimage
 
 from utils import *
@@ -48,6 +49,34 @@ def load_bi_gif(bi_dir='../data/bi_imgs/', tag='face', number='999'):
 
     return data_bi_gif
 
+def get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif):
+    n = frame_num - 1
+    rho = params[0]
+    gamma = params[1]
+    F0_gt = data_fl_frame[0, :, :, :]
+    Fn_gt = data_fl_frame[1, :, :, :]
+    # Compute Fn
+    sum0 = 0
+    for i in range(1, n):
+        sum0 += rho**(n-i) * gamma * data_bi_gif[i, :, :, :]
+    Fn = rho**n + sum0
+    loss = numpy.linalg.norm(Fn - Fn_gt)
+    # Compute Fn_rho = partial_Fn / partial_rho
+    sum1 = 0
+    for i in range(1, n-1):
+        sum1 += (n-i) * rho**(n-i-1) * gamma * data_bi_gif[i, :, :, :]
+    Fn_rho = n * rho**(n-1) * F0_gt + sum1
+    # Compute Fn_gamma = partial_Fn / partial_gamma
+    Fn_gamma = 0
+    for i in range(1, n):
+        Fn_gamma += rho**(n-i) * data_bi_gif[i, :, :, :]
+    # Compute partial_rho = partial_l / partial_rho
+    partial_rho = 2 * Fn * Fn_rho - 2 * Fn_gt * Fn_rho
+    # Compute partial_gamma = partial_l / partial_gamma
+    partial_gamma = 2 * Fn * Fn_gamma - 2 * Fn_gt * Fn_gamma
+    grad = np.array([partial_rho, partial_gamma])
+    return loss, grad
+
 def GD(x, y, theta, alpha, m, numIterations):
     xTrans = x.transpose()
     for i in range(0, numIterations):
@@ -71,6 +100,7 @@ if __name__ == '__main__':
     '''
     # data_lr_gif = load_lr_gif()
     data_lr_gif = load_lr_gif(lr_dir='../../data/lr_imgs/')
+    frame_num = data_lr_gif.shape[0]
     print 'data_lr_gif =', data_lr_gif.shape
     data_fl_frame = load_fl_frame(hr_dir='../../data/hr_imgs/')
     print 'data_fl_frame =', data_fl_frame.shape
@@ -94,7 +124,11 @@ if __name__ == '__main__':
         - Next iteration
     '''
     params = np.array([0.5, 0.5])
-    print params
+    # print params
+    loss, grad_l = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
+    print loss
+    print grad_l
+    
 
 
 
