@@ -1,7 +1,8 @@
 import glob
 import numpy as np
 import scipy.ndimage
-import cv2
+
+from utils import *
 
 hr = 32
 lr = 8
@@ -16,9 +17,23 @@ def load_lr_gif(lr_dir='../data/lr_imgs/', tag='face', number='999'):
 
     for idx, lr_img in enumerate(lr_list):
         im = scipy.ndimage.imread(lr_img)
-        data_lr_gif[idx, :, :] = im
+        data_lr_gif[idx, :, :, :] = im
 
     return data_lr_gif
+
+def load_fl_frame(hr_dir='../data/hr_imgs/', tag='face', number='999'):
+    print 'hr_path =', hr_dir + tag + '/' + number + '/*.png'
+    hr_list = glob.glob(hr_dir + tag + '/' + number + '/*.png')
+    hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
+    # print lr_list
+    data_fl_frame = np.zeros((2, hr, hr, channel))
+    # Load first frame
+    f_frame = scipy.ndimage.imread(hr_list[0])
+    data_fl_frame[0, :, :, :] = f_frame
+    # Load last frame
+    l_frame = scipy.ndimage.imread(hr_list[-1])
+    data_fl_frame[1, :, :, :] = l_frame
+    return data_fl_frame
 
 def load_bi_gif(bi_dir='../data/bi_imgs/', tag='face', number='999'):
     print 'bi_path =', bi_dir + tag + '/' + number + '/*.png'
@@ -29,10 +44,9 @@ def load_bi_gif(bi_dir='../data/bi_imgs/', tag='face', number='999'):
 
     for idx, bi_img in enumerate(bi_list):
         im = scipy.ndimage.imread(bi_img)
-        data_bi_gif[idx, :, :] = im
+        data_bi_gif[idx, :, :, :] = im
 
     return data_bi_gif
-
 
 def GD(x, y, theta, alpha, m, numIterations):
     xTrans = x.transpose()
@@ -58,6 +72,8 @@ if __name__ == '__main__':
     # data_lr_gif = load_lr_gif()
     data_lr_gif = load_lr_gif(lr_dir='../../data/lr_imgs/')
     print 'data_lr_gif =', data_lr_gif.shape
+    data_fl_frame = load_fl_frame(hr_dir='../../data/hr_imgs/')
+    print 'data_fl_frame =', data_fl_frame.shape
 
     '''
     Step 2: BI on each frame.
@@ -68,8 +84,8 @@ if __name__ == '__main__':
     # data_bi_gif = load_bi_gif()
     data_bi_gif = load_bi_gif(bi_dir='../../data/bi_imgs/')
     print 'data_bi_gif =', data_bi_gif.shape
-    optical_flow(data_bi_gif)
-    data_tf_gif = temp_filter(data_bi_gif)
+    # optical_flow(data_bi_gif)
+    # data_tf_gif = temp_filter(data_bi_gif)
 
     '''
     Step 3: Optimization.
@@ -77,6 +93,9 @@ if __name__ == '__main__':
         - Gradient descent
         - Next iteration
     '''
+    params = np.array([0.5, 0.5])
+    print params
+
 
 
 
