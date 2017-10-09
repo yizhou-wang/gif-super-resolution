@@ -8,6 +8,7 @@ from utils import *
 hr = 32
 lr = 8
 channel = 3
+# frame_num = 0
 
 def load_lr_gif(lr_dir='../data/lr_imgs/', tag='face', number='999'):
     print 'lr_path =', lr_dir + tag + '/' + number + '/*.png'
@@ -22,11 +23,24 @@ def load_lr_gif(lr_dir='../data/lr_imgs/', tag='face', number='999'):
 
     return data_lr_gif
 
+def load_hr_gif(hr_dir='../data/hr_imgs/', tag='face', number='999'):
+    print 'hr_path =', hr_dir + tag + '/' + number + '/*.png'
+    hr_list = glob.glob(hr_dir + tag + '/' + number + '/*.png')
+    hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
+    # print hr_list
+    data_hr_gif = np.zeros((len(hr_list), hr, hr, channel))
+
+    for idx, hr_img in enumerate(hr_list):
+        im = scipy.ndimage.imread(hr_img)
+        data_hr_gif[idx, :, :, :] = im
+
+    return data_hr_gif
+
 def load_fl_frame(hr_dir='../data/hr_imgs/', tag='face', number='999'):
     print 'hr_path =', hr_dir + tag + '/' + number + '/*.png'
     hr_list = glob.glob(hr_dir + tag + '/' + number + '/*.png')
     hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
-    # print lr_list
+    # print hr_list
     data_fl_frame = np.zeros((2, hr, hr, channel))
     # Load first frame
     f_frame = scipy.ndimage.imread(hr_list[0])
@@ -75,47 +89,61 @@ def get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif):
     # Compute partial_gamma = partial_l / partial_gamma
     partial_gamma = 2 * Fn * Fn_gamma - 2 * Fn_gt * Fn_gamma
     grad = np.array([partial_rho, partial_gamma])
+    # grad = np.array([np.mean(partial_rho), np.mean(partial_gamma)])
     return loss, grad
 
-def GD(x, y, theta, alpha, m, numIterations):
-    xTrans = x.transpose()
+def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif):
+    frame_num = data_bi_gif.shape[0]
     for i in range(0, numIterations):
-        hypothesis = np.dot(x, theta)
-        loss = hypothesis - y
-        # avg cost per example (the 2 in 2*m doesn't really matter here.
-        # But to be consistent with the gradient, I include it)
-        cost = np.sum(loss ** 2) / (2 * m)
-        print("Iteration %d | Cost: %f" % (i, cost))
-        # avg gradient per example
-        gradient = np.dot(xTrans, loss) / m
-        # update
-        theta = theta - alpha * gradient
-    return theta
+        loss, grad_l = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
+
+        data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, params)
+        total_bi_loss = numpy.linalg.norm(data_bi_gif - data_hr_gif)
+        total_loss = numpy.linalg.norm(data_rc_gif - data_hr_gif)
+        print("Step %d : Loss: %f | Total_BIloss: %f | Total_loss: %f" % (i, loss, total_bi_loss, total_loss))
+        # Update
+        params = params - step_size * grad_l
+        # print params
+    return params
+
+def recover_gif(data_bi_gif, data_fl_frame, params):
+    frame_num = data_bi_gif.shape[0]
+    data_rc_gif = np.zeros_like(data_bi_gif)
+    data_rc_gif[0] = data_fl_frame[0]
+    data_rc_gif[-1] = data_fl_frame[1]
+    for i in range(1, frame_num-1):
+        data_rc_gif[i] = params[0] * data_rc_gif[i-1] + params[1] * data_bi_gif[i]
+    # print data_rc_gif[i]
+    return data_rc_gif
 
 
 if __name__ == '__main__':
     '''
     Step 1: Read images.
         'data_lr_gif':  read lr GIF in a array (frame X 8 X 8 X 3)
+        'data_hr_gif':  read hr GIF (GT) in a array (frame X 32 X 32 X 3)
+        'data_fl_frame':  read first and last frame (GT) in a array (2 X 32 X 32 X 3)
     '''
     # data_lr_gif = load_lr_gif()
     data_lr_gif = load_lr_gif(lr_dir='../../data/lr_imgs/')
-    frame_num = data_lr_gif.shape[0]
     print 'data_lr_gif =', data_lr_gif.shape
+    data_hr_gif = load_hr_gif(hr_dir='../../data/hr_imgs/')
+    print 'data_hr_gif =', data_hr_gif.shape
     data_fl_frame = load_fl_frame(hr_dir='../../data/hr_imgs/')
     print 'data_fl_frame =', data_fl_frame.shape
+    # print data_fl_frame
 
     '''
     Step 2: BI on each frame.
         'data_bi_gif':  bicubic interpolation on each frame (frame X 32 X 32 X 3)
-        'alpha':    coefficients of interpolation function (frame X 32 X 32)
-                    (each alpha: 4 X 4, 8 X 8 alphas for each frame)
+        'bi_loss': loss of the bicubic interpolation
     '''
     # data_bi_gif = load_bi_gif()
     data_bi_gif = load_bi_gif(bi_dir='../../data/bi_imgs/')
     print 'data_bi_gif =', data_bi_gif.shape
     # optical_flow(data_bi_gif)
     # data_tf_gif = temp_filter(data_bi_gif)
+    bi_loss = numpy.linalg.norm(data_bi_gif[-1, :, :, :] - data_fl_frame[1, :, :, :])
 
     '''
     Step 3: Optimization.
@@ -123,12 +151,20 @@ if __name__ == '__main__':
         - Gradient descent
         - Next iteration
     '''
-    params = np.array([0.5, 0.5])
-    # print params
-    loss, grad_l = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
-    print loss
-    print grad_l
-    
+    # scaler_params = np.array([0.5, 0.5])
+    # scaler_params_res = GD(data_bi_gif, data_fl_frame, scaler_params, 0.001, 100)
+
+    mat_params = np.array([np.tile(0.5, (hr, hr, channel)), np.tile(0.5, (hr, hr, channel))])
+    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 0.0000001, 10, data_hr_gif)
+
+    '''
+    Step 4: Recover GIF.
+        'data_rc_gif':  recovered GIF (frame X 32 X 32 X 3)
+    '''
+    data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, mat_params_res)
+    total_bi_loss = numpy.linalg.norm(data_bi_gif - data_hr_gif)
+    total_loss = numpy.linalg.norm(data_rc_gif - data_hr_gif)
+
 
 
 
