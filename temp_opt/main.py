@@ -70,11 +70,11 @@ def gif_norm(gif, mutli_frame=True):
         frame_num = size[0]
         for f in range(frame_num):
             for c in range(channel):
-                # print gif[f, :, :, c].shape
+                # print numpy.linalg.norm(gif[f, :, :, c])
                 res += numpy.linalg.norm(gif[f, :, :, c])
     else:
         for c in range(channel):
-            # print gif[:, :, c].shape
+            # print numpy.linalg.norm(gif[:, :, c])
             res += numpy.linalg.norm(gif[:, :, c])
     return res
 
@@ -113,6 +113,8 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
         loss, grad_l = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
 
         data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, params)
+        # for f in range(data_rc_gif.shape[0]):
+        #     print gif_norm(data_rc_gif[f] - data_hr_gif[f], False)
         total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
         total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
         print("Step %d : Loss: %f | Total_BIloss: %f | Total_loss: %f" % (i, loss, total_bi_loss, total_loss))
