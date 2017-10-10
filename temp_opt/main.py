@@ -63,6 +63,21 @@ def load_bi_gif(bi_dir='../data/bi_imgs/', tag='face', number='999'):
 
     return data_bi_gif
 
+def gif_norm(gif, mutli_frame=True):
+    size = gif.shape
+    res = 0
+    if mutli_frame == True:
+        frame_num = size[0]
+        for f in range(frame_num):
+            for c in range(channel):
+                # print gif[f, :, :, c].shape
+                res += numpy.linalg.norm(gif[f, :, :, c])
+    else:
+        for c in range(channel):
+            # print gif[:, :, c].shape
+            res += numpy.linalg.norm(gif[:, :, c])
+    return res
+
 def get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif):
     n = frame_num - 1
     rho = params[0]
@@ -74,7 +89,7 @@ def get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif):
     for i in range(1, n):
         sum0 += rho**(n-i) * gamma * data_bi_gif[i, :, :, :]
     Fn = rho**n + sum0
-    loss = numpy.linalg.norm(Fn - Fn_gt)
+    loss = gif_norm(Fn - Fn_gt, False)
     # Compute Fn_rho = partial_Fn / partial_rho
     sum1 = 0
     for i in range(1, n-1):
@@ -98,8 +113,8 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
         loss, grad_l = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
 
         data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, params)
-        total_bi_loss = numpy.linalg.norm(data_bi_gif - data_hr_gif)
-        total_loss = numpy.linalg.norm(data_rc_gif - data_hr_gif)
+        total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
+        total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
         print("Step %d : Loss: %f | Total_BIloss: %f | Total_loss: %f" % (i, loss, total_bi_loss, total_loss))
         # Update
         params = params - step_size * grad_l
@@ -125,11 +140,11 @@ if __name__ == '__main__':
         'data_fl_frame':  read first and last frame (GT) in a array (2 X 32 X 32 X 3)
     '''
     # data_lr_gif = load_lr_gif()
-    data_lr_gif = load_lr_gif(lr_dir='../../data/lr_imgs/')
+    data_lr_gif = load_lr_gif(lr_dir='../../data/lr_imgs/', number='9')
     print 'data_lr_gif =', data_lr_gif.shape
-    data_hr_gif = load_hr_gif(hr_dir='../../data/hr_imgs/')
+    data_hr_gif = load_hr_gif(hr_dir='../../data/hr_imgs/', number='9')
     print 'data_hr_gif =', data_hr_gif.shape
-    data_fl_frame = load_fl_frame(hr_dir='../../data/hr_imgs/')
+    data_fl_frame = load_fl_frame(hr_dir='../../data/hr_imgs/', number='9')
     print 'data_fl_frame =', data_fl_frame.shape
     # print data_fl_frame
 
@@ -139,11 +154,11 @@ if __name__ == '__main__':
         'bi_loss': loss of the bicubic interpolation
     '''
     # data_bi_gif = load_bi_gif()
-    data_bi_gif = load_bi_gif(bi_dir='../../data/bi_imgs/')
+    data_bi_gif = load_bi_gif(bi_dir='../../data/bi_imgs/', number='9')
     print 'data_bi_gif =', data_bi_gif.shape
     # optical_flow(data_bi_gif)
     # data_tf_gif = temp_filter(data_bi_gif)
-    bi_loss = numpy.linalg.norm(data_bi_gif[-1, :, :, :] - data_fl_frame[1, :, :, :])
+    bi_loss = gif_norm(data_bi_gif[-1, :, :, :] - data_fl_frame[1, :, :, :], False)
 
     '''
     Step 3: Optimization.
@@ -155,15 +170,15 @@ if __name__ == '__main__':
     # scaler_params_res = GD(data_bi_gif, data_fl_frame, scaler_params, 0.001, 100)
 
     mat_params = np.array([np.tile(0.5, (hr, hr, channel)), np.tile(0.5, (hr, hr, channel))])
-    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 0.0000001, 10, data_hr_gif)
+    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 0.0000001, 20, data_hr_gif)
 
     '''
     Step 4: Recover GIF.
         'data_rc_gif':  recovered GIF (frame X 32 X 32 X 3)
     '''
     data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, mat_params_res)
-    total_bi_loss = numpy.linalg.norm(data_bi_gif - data_hr_gif)
-    total_loss = numpy.linalg.norm(data_rc_gif - data_hr_gif)
+    total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
+    total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
 
 
 
