@@ -184,12 +184,6 @@ if __name__ == '__main__':
 
     number = '9'
 
-    # gif = np.array([[[1,2,3], [4,5,6], [7,8,9]], [[1,2,3], [4,5,6], [7,8,9]], [[1,2,3], [4,5,6], [7,8,9]]])
-    # print gif.shape
-    # print gif_norm(gif, mutli_frame=False)
-
-    # sys.exit("Error message")
-
     '''
     Step 1: Read images.
         'data_lr_gif':      read lr GIF in a array (frame X 8 X 8 X 3)
