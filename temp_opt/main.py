@@ -236,7 +236,6 @@ if __name__ == '__main__':
 
     '''
     Step 5: Save GIF.
-        'data_rc_gif':  recovered GIF (frame X 32 X 32 X 3)
     '''    
     save_frames(gif=data_rc_gif_out, dir='../../data/rc_imgs/', number=number)
 
