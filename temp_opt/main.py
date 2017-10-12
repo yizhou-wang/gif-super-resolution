@@ -122,7 +122,7 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
     for i in range(0, numIterations):
         loss, grad_l = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
         bi_loss = gif_norm(data_bi_gif[-1, :, :, :] - data_fl_frame[1, :, :, :], False)
-        data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, params)
+        data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, params, False, True)
         # for f in range(data_rc_gif.shape[0]):
         #     print gif_norm(data_rc_gif[f] - data_hr_gif[f], False)
         total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
@@ -133,28 +133,34 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
         # print params
     return params
 
-def recover_gif(data_bi_gif, data_fl_frame, params, keep_fl=True):
+def recover_gif(data_bi_gif, data_fl_frame, params, keep_fl=True, use_iter=True):
     frame_num = data_bi_gif.shape[0]
     data_rc_gif = np.zeros_like(data_bi_gif)
     if keep_fl == True:
         data_rc_gif[0] = data_fl_frame[0]
         data_rc_gif[-1] = data_fl_frame[1]
-        sum2 = np.zeros((frame_num-1, hr, hr, channel))
-        sum2[0] += params[0]**(frame_num-1) * params[1] * data_bi_gif[1]
-        for i in range(1, frame_num-1):
-            sum2[i-1] = sum2[i-2] + params[0]**(frame_num-i) * params[1] * data_bi_gif[i] 
-        for i in range(1, frame_num-1):
-            # data_rc_gif[i] = params[0] * data_rc_gif[i-1] + params[1] * data_bi_gif[i]
-            data_rc_gif[i] = params[0]**i * data_rc_gif[0] + sum2[i-1]
+        if use_iter == True:
+            for i in range(1, frame_num-1):
+                data_rc_gif[i] = params[0] * data_rc_gif[i-1] + params[1] * data_bi_gif[i]
+        else:
+            sum2 = np.zeros((frame_num-1, hr, hr, channel))
+            sum2[0] += params[0]**(frame_num-1) * params[1] * data_bi_gif[1]
+            for i in range(1, frame_num-1):
+                sum2[i-1] = sum2[i-2] + params[0]**(frame_num-i) * params[1] * data_bi_gif[i] 
+            for i in range(1, frame_num-1):
+                data_rc_gif[i] = params[0]**i * data_rc_gif[0] + sum2[i-1]
     else:
         data_rc_gif[0] = data_fl_frame[0]
-        sum2 = np.zeros((frame_num, hr, hr, channel))
-        sum2[0] += params[0]**(frame_num-1) * params[1] * data_bi_gif[1]
-        for i in range(1, frame_num):
-            sum2[i-1] = sum2[i-2] + params[0]**(frame_num-i) * params[1] * data_bi_gif[i] 
-        for i in range(1, frame_num):
-            # data_rc_gif[i] = params[0] * data_rc_gif[i-1] + params[1] * data_bi_gif[i]        
-            data_rc_gif[i] = params[0]**i * data_rc_gif[0] + sum2[i-1]
+        if use_iter == True:
+            for i in range(1, frame_num):
+                data_rc_gif[i] = params[0] * data_rc_gif[i-1] + params[1] * data_bi_gif[i]        
+        else:
+            sum2 = np.zeros((frame_num, hr, hr, channel))
+            sum2[0] += params[0]**(frame_num-1) * params[1] * data_bi_gif[1]
+            for i in range(1, frame_num):
+                sum2[i-1] = sum2[i-2] + params[0]**(frame_num-i) * params[1] * data_bi_gif[i] 
+            for i in range(1, frame_num):
+                data_rc_gif[i] = params[0]**i * data_rc_gif[0] + sum2[i-1]
     # print data_rc_gif[i]
     return data_rc_gif
 
@@ -182,7 +188,7 @@ def save_frames(gif, dir='../data/rc_imgs/', tag='face', number='999'):
 
 if __name__ == '__main__':
 
-    number = '9'
+    number = '10'
 
     '''
     Step 1: Read images.
@@ -219,16 +225,15 @@ if __name__ == '__main__':
     '''
     # scaler_params = np.array([0.5, 0.5])
     # scaler_params_res = GD(data_bi_gif, data_fl_frame, scaler_params, 0.001, 100)
-
     mat_params = np.array([np.tile(0.5, (hr, hr, channel)), np.tile(0.5, (hr, hr, channel))])
-    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 0.000001, 100, data_hr_gif)
+    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 1000, data_hr_gif)
 
     '''
     Step 4: Recover GIF.
         'data_rc_gif':      recovered GIF (frame X 32 X 32 X 3)
         'data_rc_gif_out':  map to [0, 255] (frame X 32 X 32 X 3)
     '''
-    data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, mat_params_res, False)
+    data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, mat_params_res, False, True)
     # print data_rc_gif
     total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
     total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
