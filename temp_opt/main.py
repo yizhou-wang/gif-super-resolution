@@ -1,9 +1,6 @@
-import glob
 import numpy as np
-import numpy.linalg
-import scipy.ndimage, scipy.misc
-import os, sys
 
+from io_data import *
 from utils import *
 
 hr = 32
@@ -11,78 +8,6 @@ lr = 8
 channel = 3
 # frame_num = 0
 # TEST_COUNTER = 0
-
-def wait():
-    raw_input("Press Enter to continue...")
-
-def load_lr_gif(lr_dir='../data/lr_imgs/', tag='face', number='999'):
-    print 'lr_path =', lr_dir + tag + '/' + number + '/*.png'
-    lr_list = glob.glob(lr_dir + tag + '/' + number + '/*.png')
-    lr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
-    # print lr_list
-    data_lr_gif = np.zeros((len(lr_list), lr, lr, channel))
-
-    for idx, lr_img in enumerate(lr_list):
-        im = scipy.ndimage.imread(lr_img)
-        data_lr_gif[idx, :, :, :] = im
-
-    return data_lr_gif
-
-def load_hr_gif(hr_dir='../data/hr_imgs/', tag='face', number='999'):
-    print 'hr_path =', hr_dir + tag + '/' + number + '/*.png'
-    hr_list = glob.glob(hr_dir + tag + '/' + number + '/*.png')
-    hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
-    # print hr_list
-    data_hr_gif = np.zeros((len(hr_list), hr, hr, channel))
-
-    for idx, hr_img in enumerate(hr_list):
-        im = scipy.ndimage.imread(hr_img)
-        data_hr_gif[idx, :, :, :] = im
-
-    return data_hr_gif
-
-def load_fl_frame(hr_dir='../data/hr_imgs/', tag='face', number='999'):
-    print 'hr_path =', hr_dir + tag + '/' + number + '/*.png'
-    hr_list = glob.glob(hr_dir + tag + '/' + number + '/*.png')
-    hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
-    # print hr_list
-    data_fl_frame = np.zeros((2, hr, hr, channel))
-    # Load first frame
-    f_frame = scipy.ndimage.imread(hr_list[0])
-    data_fl_frame[0, :, :, :] = f_frame
-    # Load last frame
-    l_frame = scipy.ndimage.imread(hr_list[-1])
-    data_fl_frame[1, :, :, :] = l_frame
-    return data_fl_frame
-
-def load_bi_gif(bi_dir='../data/bi_imgs/', tag='face', number='999'):
-    print 'bi_path =', bi_dir + tag + '/' + number + '/*.png'
-    bi_list = glob.glob(bi_dir + tag + '/' + number + '/*.png')
-    bi_list.sort(key=lambda f: int(filter(str.isdigit, f)))
-    # print bi_list
-    data_bi_gif = np.zeros((len(bi_list), hr, hr, channel))
-
-    for idx, bi_img in enumerate(bi_list):
-        im = scipy.ndimage.imread(bi_img)
-        data_bi_gif[idx, :, :, :] = im
-
-    return data_bi_gif
-
-def gif_norm(gif, mutli_frame=True):
-    size = gif.shape
-    res = 0
-    if mutli_frame == True:
-        frame_num = size[0]
-        for f in range(frame_num):
-            for c in range(channel):
-                # print numpy.linalg.norm(gif[f, :, :, c])
-                res += numpy.linalg.norm(gif[f, :, :, c])
-    else:
-        for c in range(channel):
-            # print gif[:, :, c]
-            # print numpy.linalg.norm(gif[:, :, c])
-            res += numpy.linalg.norm(gif[:, :, c])
-    return res
 
 def get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif):
     n = frame_num
@@ -162,28 +87,6 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
         # print params
     return params
 
-def toimg(gif):
-    gif = np.where(gif <= 255, gif, 255)
-    return gif
-
-def save_frame(img, dir='../data/test/', f=0):
-    save_dir = dir
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    name = save_dir + str(f) + '.png'
-    scipy.misc.imsave(name, img)
-    # wait()
-
-def save_frames(gif, dir='../data/rc_imgs/', tag='face', number='999'):
-    save_dir = dir + tag + '/' + number + '/'
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    size = gif.shape
-    for f in range(size[0]):
-        name = save_dir + str(f) + '.png'
-        scipy.misc.imsave(name, gif[f])
-
-
 if __name__ == '__main__':
 
     number = '10'
@@ -195,11 +98,11 @@ if __name__ == '__main__':
         'data_fl_frame':    read first and last frame (GT) in a array (2 X 32 X 32 X 3)
     '''
     # data_lr_gif = load_lr_gif()
-    data_lr_gif = load_lr_gif(lr_dir='../../data/lr_imgs/', number=number)
+    data_lr_gif = load_lr_gif(dir='../../data/lr_imgs/', number=number, reso=lr)
     print 'data_lr_gif =', data_lr_gif.shape
-    data_hr_gif = load_hr_gif(hr_dir='../../data/hr_imgs/', number=number)
+    data_hr_gif = load_hr_gif(dir='../../data/hr_imgs/', number=number, reso=hr)
     print 'data_hr_gif =', data_hr_gif.shape
-    data_fl_frame = load_fl_frame(hr_dir='../../data/hr_imgs/', number=number)
+    data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', number=number, reso=hr)
     print 'data_fl_frame =', data_fl_frame.shape
     # print data_fl_frame
 
@@ -209,7 +112,7 @@ if __name__ == '__main__':
         'bi_loss':      loss of the bicubic interpolation
     '''
     # data_bi_gif = load_bi_gif()
-    data_bi_gif = load_bi_gif(bi_dir='../../data/bi_imgs/', number=number)
+    data_bi_gif = load_bi_gif(dir='../../data/bi_imgs/', number=number, reso=hr)
     print 'data_bi_gif =', data_bi_gif.shape
     # optical_flow(data_bi_gif)
     # data_tf_gif = temp_filter(data_bi_gif)
