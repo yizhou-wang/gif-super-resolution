@@ -224,7 +224,7 @@ if __name__ == '__main__':
     # scaler_params = np.array([0.5, 0.5])
     # scaler_params_res = GD(data_bi_gif, data_fl_frame, scaler_params, 0.001, 100)
     mat_params = np.array(np.tile(0.5, (hr, hr, channel)))
-    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 100, data_hr_gif, param_num=1)
+    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 1000, data_hr_gif, param_num=1)
     # mat_params = np.array([np.tile(0.5, (hr, hr, channel)), np.tile(0.5, (hr, hr, channel))])
     # mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 1000, data_hr_gif)
 
