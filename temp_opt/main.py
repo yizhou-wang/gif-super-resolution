@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from io_data import *
 from utils import *
@@ -13,6 +14,9 @@ def get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif):
     n = frame_num
     rho = params[0]
     gamma = params[1]
+    # print 'LG:', params.shape
+    # print 'LG:', rho.shape
+    # print 'LG:', gamma.shape
     F0_gt = data_fl_frame[0, :, :, :]
     Fn_gt = data_fl_frame[1, :, :, :]
     # Compute Fn
@@ -71,17 +75,20 @@ def recover_gif(data_bi_gif, data_fl_frame, params, keep_fl=True, use_iter=False
     # print data_rc_gif[i]
     return data_rc_gif
 
-def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif, param_num=2):
+def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif, print_tloss=True):
     frame_num = data_bi_gif.shape[0]
+    bi_loss = gif_norm(data_bi_gif[-1, :, :, :] - data_fl_frame[1, :, :, :], False)
+    # print 'GD:', params.shape
     for i in range(0, numIterations):
+        start_time = time.time()
         loss, grad_l = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
-        bi_loss = gif_norm(data_bi_gif[-1, :, :, :] - data_fl_frame[1, :, :, :], False)
-        data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, params, False, False)
-        # for f in range(data_rc_gif.shape[0]):
-        #     print gif_norm(data_rc_gif[f] - data_hr_gif[f], False)
-        total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
-        total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
-        print("Step %d : BIloss: %f | Loss: %f | Total_BIloss: %f | Total_loss: %f" % (i, bi_loss, loss, total_bi_loss, total_loss))
+        if print_tloss:
+            data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, params, keep_fl=False, use_iter=False)
+            total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
+            total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
+            print("Step %d... frame_loss: %f / %f | Total_loss: %f / %f | time: %.8s s" % (i, bi_loss, loss, total_bi_loss, total_loss, (time.time() - start_time)))
+        else:
+            print("Step %d... frame_loss: %f / %f | time: %.8s s" % (i, bi_loss, loss, (time.time() - start_time)))            
         # Update
         params = params - step_size * grad_l
         # print params
@@ -89,6 +96,7 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
 
 if __name__ == '__main__':
 
+    # Choose a GIF for test
     number = '10'
 
     '''
@@ -97,26 +105,20 @@ if __name__ == '__main__':
         'data_hr_gif':      read hr GIF (GT) in a array (frame X 32 X 32 X 3)
         'data_fl_frame':    read first and last frame (GT) in a array (2 X 32 X 32 X 3)
     '''
-    # data_lr_gif = load_lr_gif()
     data_lr_gif = load_lr_gif(dir='../../data/lr_imgs/', number=number, reso=lr)
     print 'data_lr_gif =', data_lr_gif.shape
     data_hr_gif = load_hr_gif(dir='../../data/hr_imgs/', number=number, reso=hr)
     print 'data_hr_gif =', data_hr_gif.shape
     data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', number=number, reso=hr)
     print 'data_fl_frame =', data_fl_frame.shape
-    # print data_fl_frame
 
     '''
     Step 2: BI on each frame.
         'data_bi_gif':  bicubic interpolation on each frame (frame X 32 X 32 X 3)
         'bi_loss':      loss of the bicubic interpolation
     '''
-    # data_bi_gif = load_bi_gif()
     data_bi_gif = load_bi_gif(dir='../../data/bi_imgs/', number=number, reso=hr)
     print 'data_bi_gif =', data_bi_gif.shape
-    # optical_flow(data_bi_gif)
-    # data_tf_gif = temp_filter(data_bi_gif)
-    # bi_loss = gif_norm(data_bi_gif[-1, :, :, :] - data_fl_frame[1, :, :, :], False)
 
     '''
     Step 3: Optimization.
@@ -126,26 +128,31 @@ if __name__ == '__main__':
     '''
     # scaler_params = np.array([0.5, 0.5])
     # scaler_params_res = GD(data_bi_gif, data_fl_frame, scaler_params, 0.001, 100)
-    mat_params = np.array(np.tile(0.5, (hr, hr, channel)))
-    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 1000, data_hr_gif, param_num=1)
-    # mat_params = np.array([np.tile(0.5, (hr, hr, channel)), np.tile(0.5, (hr, hr, channel))])
-    # mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 1000, data_hr_gif)
+    # mat_params = np.array([0.5, 0.5])
+    # mat_params = np.array([np.tile(0.5, (hr, hr)), np.tile(0.5, (hr, hr))])
+    start_time = time.time()
+    mat_params = np.array([np.tile(0.5, (hr, hr, channel)), np.tile(0.5, (hr, hr, channel))])
+    mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 100, data_hr_gif, False)
+    print("Optimization completed! Time consumed: %.8s s" % ((time.time() - start_time)))
 
     '''
     Step 4: Recover GIF.
         'data_rc_gif':      recovered GIF (frame X 32 X 32 X 3)
         'data_rc_gif_out':  map to [0, 255] (frame X 32 X 32 X 3)
     '''
-    data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, mat_params_res, True, False)
-    # print data_rc_gif
+    start_time = time.time()
+    data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, mat_params_res, keep_fl=True, use_iter=False)
+    print("Recovering completed! Time consumed: %.8s s" % ((time.time() - start_time)))
     total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
     total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
-    data_rc_gif_out = toimg(data_rc_gif)
+    print("Total_loss: %f / %f" % (total_bi_loss, total_loss))
 
     '''
     Step 5: Save GIF.
     '''    
+    data_rc_gif_out = toimg(data_rc_gif)
     save_frames(gif=data_rc_gif_out, dir='../../data/rc_imgs/', number=number)
+    print 'Frames saved!'
 
 
 
