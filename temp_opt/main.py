@@ -97,7 +97,7 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
 if __name__ == '__main__':
 
     # Choose a GIF for test
-    number = '10'
+    number = '999'
 
     '''
     Step 1: Read images.
@@ -134,6 +134,8 @@ if __name__ == '__main__':
     mat_params = np.array([np.tile(0.5, (hr, hr, channel)), np.tile(0.5, (hr, hr, channel))])
     mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 100, data_hr_gif, False)
     print("Optimization completed! Time consumed: %.8s s" % ((time.time() - start_time)))
+    # print np.mean(mat_params_res[0])
+    # print np.mean(mat_params_res[1])
 
     '''
     Step 4: Recover GIF.
@@ -153,6 +155,9 @@ if __name__ == '__main__':
     data_rc_gif_out = toimg(data_rc_gif)
     save_frames(gif=data_rc_gif_out, dir='../../data/rc_imgs/', number=number)
     print 'Frames saved!'
+    img2gif(in_dir='../../data/hr_imgs/', number=number, out_dir='../../data/hr_gifs/')
+    img2gif(in_dir='../../data/rc_imgs/', number=number, out_dir='../../data/rc_gifs/')
+    print 'GIF saved!'
 
 
 

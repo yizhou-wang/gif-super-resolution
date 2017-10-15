@@ -2,6 +2,7 @@ import glob
 import numpy as np
 import scipy.ndimage, scipy.misc
 import os, sys
+from subprocess import call
 
 def load_lr_gif(dir='../data/lr_imgs/', tag='face', number='999', reso=8, channel=3):
     print 'lr_path =', dir + tag + '/' + number + '/*.png'
@@ -76,4 +77,15 @@ def save_frames(gif, dir='../data/rc_imgs/', tag='face', number='999'):
     for f in range(size[0]):
         name = save_dir + str(f) + '.png'
         scipy.misc.imsave(name, gif[f])
+
+def img2gif(in_dir='../data/rc_imgs/', tag='face', number='999', out_dir='../data/rc_gifs/'):
+    """
+    Converts png frames to gif with each png containing the full image data
+    """
+    img_dir = in_dir + tag + '/' + number + '/'
+    gif_dir = out_dir + tag + '/'
+    if not os.path.exists(gif_dir):
+        os.makedirs(gif_dir)
+
+    call(["convert", "-delay", str(0.2), "-loop", "0", img_dir + "*.png", gif_dir + number + ".gif"])
 
