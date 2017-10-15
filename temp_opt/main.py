@@ -4,8 +4,8 @@ import time
 from io_data import *
 from utils import *
 
-hr = 32
-lr = 8
+hr = 256
+lr = 64
 channel = 3
 # frame_num = 0
 # TEST_COUNTER = 0
@@ -100,28 +100,38 @@ if __name__ == '__main__':
     number = '999'
 
     '''
-    Step 1: Read images.
+    Step 1: Extract frames.
+    '''
+    print 'Extract frames ...'
+    gif2img(in_dir='../../data/raw_gifs/', number=number, out_dir='../../data/raw_imgs/')
+    print 'Gerate HR & LR ...'
+    gen_hr_lr(in_dir='../../data/raw_imgs/', number=number, hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', reso=(hr, lr))
+
+    '''
+    Step 2: Read images.
         'data_lr_gif':      read lr GIF in a array (frame X 8 X 8 X 3)
         'data_hr_gif':      read hr GIF (GT) in a array (frame X 32 X 32 X 3)
         'data_fl_frame':    read first and last frame (GT) in a array (2 X 32 X 32 X 3)
     '''
-    data_lr_gif = load_lr_gif(dir='../../data/lr_imgs/', number=number, reso=lr)
-    print 'data_lr_gif =', data_lr_gif.shape
+    # data_lr_gif = load_lr_gif(dir='../../data/lr_imgs/', number=number, reso=lr)
+    # print 'data_lr_gif =', data_lr_gif.shape
     data_hr_gif = load_hr_gif(dir='../../data/hr_imgs/', number=number, reso=hr)
     print 'data_hr_gif =', data_hr_gif.shape
     data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', number=number, reso=hr)
     print 'data_fl_frame =', data_fl_frame.shape
 
     '''
-    Step 2: BI on each frame.
+    Step 3: BI on each frame.
         'data_bi_gif':  bicubic interpolation on each frame (frame X 32 X 32 X 3)
         'bi_loss':      loss of the bicubic interpolation
     '''
+    print 'Bicubic interpolation ...'
+    bicu_inter(in_dir='../../data/lr_imgs/', number=number, out_dir='../../data/bi_imgs/', reso=(hr, lr))
     data_bi_gif = load_bi_gif(dir='../../data/bi_imgs/', number=number, reso=hr)
     print 'data_bi_gif =', data_bi_gif.shape
 
     '''
-    Step 3: Optimization.
+    Step 4: Optimization.
         - Compute cost = BI cost + TR cost
         - Gradient descent
         - Next iteration
@@ -134,11 +144,11 @@ if __name__ == '__main__':
     mat_params = np.array([np.tile(0.5, (hr, hr, channel)), np.tile(0.5, (hr, hr, channel))])
     mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-7, 100, data_hr_gif, False)
     print("Optimization completed! Time consumed: %.8s s" % ((time.time() - start_time)))
-    # print np.mean(mat_params_res[0])
-    # print np.mean(mat_params_res[1])
+    # print mat_params_res[0,:,:,0]
+    # print mat_params_res[1,:,:,0]
 
     '''
-    Step 4: Recover GIF.
+    Step 5: Recover GIF.
         'data_rc_gif':      recovered GIF (frame X 32 X 32 X 3)
         'data_rc_gif_out':  map to [0, 255] (frame X 32 X 32 X 3)
     '''
@@ -150,7 +160,7 @@ if __name__ == '__main__':
     print("Total_loss: %f / %f" % (total_bi_loss, total_loss))
 
     '''
-    Step 5: Save GIF.
+    Step 6: Save GIF.
     '''    
     data_rc_gif_out = toimg(data_rc_gif)
     save_frames(gif=data_rc_gif_out, dir='../../data/rc_imgs/', number=number)
