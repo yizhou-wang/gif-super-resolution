@@ -97,7 +97,7 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
 if __name__ == '__main__':
 
     # Choose a GIF for test
-    number = '999'
+    number = '1000'
 
     '''
     Step 1: Extract frames.
