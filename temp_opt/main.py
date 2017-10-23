@@ -14,17 +14,18 @@ channel = 3
 def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif, print_tloss=True):
     frame_num = data_bi_gif.shape[0]
     bi_loss = gif_norm(data_bi_gif[-1, :, :, :] - data_fl_frame[1, :, :, :], False)
+    bi_psnr = PSNR(data_fl_frame[1, :, :, :], data_bi_gif[-1, :, :, :])
     # print 'GD:', params.shape
     for i in range(0, numIterations):
         start_time = time.time()
-        loss, grad_l = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
+        loss, grad_l, psnr = get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif)
         if print_tloss:
             data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, params, keep_fl=False, use_iter=False)
             total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
             total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
             print("Step %d ... frame_loss: %f / %f | Total_loss: %f / %f | time: %.8s s" % (i, bi_loss, loss, total_bi_loss, total_loss, (time.time() - start_time)))
         else:
-            print("Step %d ... frame_loss: %f / %f | time: %.8s s" % (i, bi_loss, loss, (time.time() - start_time)))            
+            print("Step %d ... frame_loss: %f / %f | PSNR: %f / %f | time: %.8s s" % (i, bi_loss, loss, bi_psnr, psnr, (time.time() - start_time)))            
         # Update
         # print np.mean(step_size * grad_l)
         params = params - step_size * grad_l
@@ -35,7 +36,7 @@ if __name__ == '__main__':
 
     # Choose a GIF for test
     tag = 'yizhou'
-    number = '5'
+    number = '33'
 
     '''
     Step 1: Extract frames.
@@ -95,7 +96,9 @@ if __name__ == '__main__':
     print("Recovering completed! Time consumed: %.8s s" % ((time.time() - start_time)))
     total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
     total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
-    print("Total_loss: %f / %f" % (total_bi_loss, total_loss))
+    total_bi_psnr = PSNR(data_hr_gif, data_bi_gif)
+    total_psnr = PSNR(data_hr_gif, data_rc_gif)
+    print("Total_loss: %f / %f | PSNR: %f / %f" % (total_bi_loss, total_loss, total_bi_psnr, total_psnr))
 
     '''
     Step 6: Save GIF.

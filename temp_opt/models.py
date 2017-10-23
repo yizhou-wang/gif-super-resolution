@@ -34,7 +34,8 @@ def get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif):
     partial_gamma = 2 * (Fn - Fn_gt) * Fn_gamma
     grad = np.array([partial_rho, partial_gamma])
     # grad = np.array([np.mean(partial_rho), np.mean(partial_gamma)])
-    return loss, grad
+    psnr = PSNR(Fn_gt, Fn)
+    return loss, grad, psnr
 
 def get_loss_gradiant_sum1(frame_num, params, data_fl_frame, data_bi_gif):
     n = frame_num
