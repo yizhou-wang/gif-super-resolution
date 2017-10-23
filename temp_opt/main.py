@@ -5,8 +5,8 @@ from io_data import *
 from utils import *
 from models import *
 
-hr = 256
-lr = 64
+hr = 32
+lr = 8
 channel = 3
 # frame_num = 0
 # TEST_COUNTER = 0
@@ -34,15 +34,16 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
 if __name__ == '__main__':
 
     # Choose a GIF for test
-    number = '1'
+    tag = 'yizhou'
+    number = '5'
 
     '''
     Step 1: Extract frames.
     '''
     print 'Extract frames ...'
-    gif2img(in_dir='../../data/raw_gifs/', number=number, out_dir='../../data/raw_imgs/')
+    gif2img(in_dir='../../data/raw_gifs/', tag=tag, number=number, out_dir='../../data/raw_imgs/')
     print 'Gerate HR & LR ...'
-    gen_hr_lr(in_dir='../../data/raw_imgs/', number=number, hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', reso=(hr, lr))
+    gen_hr_lr(in_dir='../../data/raw_imgs/', tag=tag, number=number, hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', reso=(hr, lr))
 
     '''
     Step 2: Read images.
@@ -52,9 +53,9 @@ if __name__ == '__main__':
     '''
     # data_lr_gif = load_lr_gif(dir='../../data/lr_imgs/', number=number, reso=lr)
     # print 'data_lr_gif =', data_lr_gif.shape
-    data_hr_gif = load_hr_gif(dir='../../data/hr_imgs/', number=number, reso=hr)
+    data_hr_gif = load_hr_gif(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
     print 'data_hr_gif =', data_hr_gif.shape
-    data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', number=number, reso=hr)
+    data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
     print 'data_fl_frame =', data_fl_frame.shape
 
     '''
@@ -63,8 +64,8 @@ if __name__ == '__main__':
         'bi_loss':      loss of the bicubic interpolation
     '''
     print 'Bicubic interpolation ...'
-    bicu_inter(in_dir='../../data/lr_imgs/', number=number, out_dir='../../data/bi_imgs/', reso=(hr, lr))
-    data_bi_gif = load_bi_gif(dir='../../data/bi_imgs/', number=number, reso=hr)
+    bicu_inter(in_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../data/bi_imgs/', reso=(hr, lr))
+    data_bi_gif = load_bi_gif(dir='../../data/bi_imgs/', tag=tag, number=number, reso=hr)
     print 'data_bi_gif =', data_bi_gif.shape
 
     '''
@@ -81,7 +82,7 @@ if __name__ == '__main__':
     mat_params = np.array([np.tile(0.9, (hr, hr, channel)), np.tile(0.1, (hr, hr, channel))])
     mat_params_res = GD(data_bi_gif, data_fl_frame, mat_params, 1e-8, 100, data_hr_gif, False)
     print("Optimization completed! Time consumed: %.8s s" % ((time.time() - start_time)))
-    print np.mean(mat_params_res)
+    print np.mean(mat_params_res[0]), np.mean(mat_params_res[1])
     # print mat_params_res[1,:,:,0]
 
     '''
@@ -100,11 +101,11 @@ if __name__ == '__main__':
     Step 6: Save GIF.
     '''    
     data_rc_gif_out = toimg(data_rc_gif)
-    save_frames(gif=data_rc_gif_out, dir='../../data/rc_imgs/', number=number)
+    save_frames(gif=data_rc_gif_out, dir='../../data/rc_imgs/', tag=tag, number=number)
     print 'Frames saved!'
-    img2gif(in_dir='../../data/hr_imgs/', number=number, out_dir='../../data/hr_gifs/')
-    img2gif(in_dir='../../data/rc_imgs/', number=number, out_dir='../../data/rc_gifs/')
-    img2gif(in_dir='../../data/bi_imgs/', number=number, out_dir='../../data/bi_gifs/')
+    img2gif(in_dir='../../data/hr_imgs/', tag=tag, number=number, out_dir='../../data/hr_gifs/')
+    img2gif(in_dir='../../data/rc_imgs/', tag=tag, number=number, out_dir='../../data/rc_gifs/')
+    img2gif(in_dir='../../data/bi_imgs/', tag=tag, number=number, out_dir='../../data/bi_gifs/')
     print 'GIF saved!'
 
 
