@@ -1,5 +1,6 @@
 import numpy as np
 import time
+from argparse import ArgumentParser
 
 from io_data import *
 from utils import *
@@ -35,8 +36,12 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
 if __name__ == '__main__':
 
     # Choose a GIF for test
-    tag = 'yizhou'
-    number = '33'
+    parser = ArgumentParser()
+    parser.add_argument("-t", "--tag", dest="tag", default='yizhou', help="choose a gif tag")
+    parser.add_argument("-n", "--number", dest="number", default='0', help="choose a gif number")
+    args = parser.parse_args()
+    tag = args.tag
+    number = args.number
 
     '''
     Step 1: Extract frames.

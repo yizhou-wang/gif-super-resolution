@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.linalg
+import cv2
 from scipy.signal import butter, lfilter, freqz
 
 def gif_norm(gif, mutli_frame=True):
@@ -18,15 +19,29 @@ def gif_norm(gif, mutli_frame=True):
     return res
 
 def PSNR(y_true, y_pred):
-    """
-    PSNR is Peek Signal to Noise Ratio, which is similar to mean squared error.
-    It can be calculated as
-    PSNR = 20 * log10(MAXp) - 10 * log10(MSE)
-    When providing an unscaled input, MAXp = 255. Therefore 20 * log10(255)== 48.1308036087.
-    However, since we are scaling our input, MAXp = 1. Therefore 20 * log10(1) = 0.
-    Thus we remove that component completely and only compute the remaining MSE component.
-    """
-    return 20.0 * np.log(255.0) / np.log(10.0) - 10.0 * np.log(np.mean(np.square(y_pred - y_true))) / np.log(10.0)
+    shape = y_true.shape
+    y_true = y_true.astype(np.uint8)
+    y_pred = y_pred.astype(np.uint8)
+    if len(shape) == 3:
+        y_true_ycc = cv2.cvtColor(y_true, cv2.COLOR_BGR2YCR_CB)
+        y_pred_ycc = cv2.cvtColor(y_pred, cv2.COLOR_BGR2YCR_CB)
+        y_true_y = y_true_ycc[:, :, 0]
+        y_pred_y = y_pred_ycc[:, :, 0]
+    elif len(shape) == 4:
+        y_true_ycc = np.zeros_like(y_true)
+        y_pred_ycc = np.zeros_like(y_pred)
+        for f in range(shape[0]):
+            y_true_ycc[f] = cv2.cvtColor(y_true[f], cv2.COLOR_BGR2YCR_CB)
+            y_pred_ycc[f] = cv2.cvtColor(y_pred[f], cv2.COLOR_BGR2YCR_CB)
+        y_true_y = y_true_ycc[:, :, :, 0]
+        y_pred_y = y_pred_ycc[:, :, :, 0]
+    else:
+        print('ERROR: Image shape incorrect!')
+    y_true_y = y_true_y.astype(np.float)
+    y_pred_y = y_pred_y.astype(np.float)
+    # print y_pred_y.shape
+    return 20.0 * np.log(255.0) / np.log(10.0) - 10.0 * np.log(np.mean(np.square(y_pred_y - y_true_y))) / np.log(10.0)
+    # return 20.0 * np.log(255.0) / np.log(10.0) - 10.0 * np.log(np.mean(np.square(y_pred - y_true))) / np.log(10.0)
 
 def wait():
     raw_input("Press Enter to continue...")
