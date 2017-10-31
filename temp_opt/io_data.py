@@ -5,6 +5,7 @@ import scipy.ndimage, scipy.misc
 import os, sys
 from subprocess import call
 import cv2
+import scipy.io
 
 def gif2img(in_dir='../data/raw_gifs/', tag='face', number='999', out_dir='../data/raw_imgs/'):
     '''
@@ -41,8 +42,8 @@ def gen_hr_lr(in_dir='../data/raw_imgs/', tag='face', number='999', hr_dir='../d
     jpg_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     for jpg in jpg_list:
         im1 = Image.open(jpg)
-        im2 = im1.resize(hr)
-        im3 = im1.resize(lr)
+        im2 = im1.resize(hr).convert('RGB')
+        im3 = im1.resize(lr).convert('RGB')
         q1 = hr_dir + jpg.split('/')[-1]
         q2 = lr_dir + jpg.split('/')[-1]
         im2.save(q1)
@@ -151,3 +152,27 @@ def img2gif(in_dir='../data/rc_imgs/', tag='face', number='999', out_dir='../dat
 
     call(["convert", "-delay", str(0.2), "-loop", "0", img_dir + "*.jpg", gif_dir + number + ".gif"])
 
+def savemat(hr_dir='../data/hr_imgs/', lr_dir='../data/lr_imgs/', tag='face', number='999', out_dir='../data/mats/', reso=(32, 8), channel=3):
+    hr = reso[0]
+    lr = reso[1]
+    print 'lr_path =', lr_dir + tag + '/' + number + '/*.jpg'
+    lr_list = glob.glob(lr_dir + tag + '/' + number + '/*.jpg')
+    lr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
+    data_lr_gif = np.zeros((lr, lr, len(lr_list)))
+    for idx, lr_img in enumerate(lr_list):
+        im = scipy.ndimage.imread(lr_img, mode='L')
+        data_lr_gif[:, :, idx] = im
+    print 'hr_path =', hr_dir + tag + '/' + number + '/*.jpg'
+    hr_list = glob.glob(hr_dir + tag + '/' + number + '/*.jpg')
+    hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
+    data_hr_gif = np.zeros((hr, hr, 1, len(hr_list)))
+    for idx, hr_img in enumerate(hr_list):
+        im = scipy.ndimage.imread(hr_img, mode='L')
+        data_hr_gif[:, :, 0, idx] = im
+    data_lr_gif = data_lr_gif / 255.0
+    data_hr_gif = data_hr_gif / 255.0
+
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    filename = out_dir + 'test_' + number + '.mat'
+    scipy.io.savemat(filename, mdict={'frames': data_lr_gif, 'im_gt': data_hr_gif})

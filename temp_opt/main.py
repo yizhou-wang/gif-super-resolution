@@ -1,5 +1,5 @@
 import numpy as np
-import time
+import sys, time
 from argparse import ArgumentParser
 
 from io_data import *
@@ -63,6 +63,7 @@ if __name__ == '__main__':
     print 'data_hr_gif =', data_hr_gif.shape
     data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
     print 'data_fl_frame =', data_fl_frame.shape
+    savemat(hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../data/mats/')
 
     '''
     Step 3: BI on each frame.
@@ -104,6 +105,8 @@ if __name__ == '__main__':
     total_bi_psnr = PSNR(data_hr_gif, data_bi_gif)
     total_psnr = PSNR(data_hr_gif, data_rc_gif)
     print("Total_loss: %f / %f | PSNR: %f / %f" % (total_bi_loss, total_loss, total_bi_psnr, total_psnr))
+    if total_bi_psnr > total_psnr:
+        sys.exit('Not Good!!!')
 
     '''
     Step 6: Save GIF.
