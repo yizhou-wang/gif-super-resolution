@@ -40,7 +40,12 @@ def PSNR(y_true, y_pred):
     y_true_y = y_true_y.astype(np.float)
     y_pred_y = y_pred_y.astype(np.float)
     # print y_pred_y.shape
-    return 20.0 * np.log(255.0) / np.log(10.0) - 10.0 * np.log(np.mean(np.square(y_pred_y - y_true_y))) / np.log(10.0)
+    # print '4', np.log(np.mean(np.square(y_pred_y - y_true_y)))
+    if np.mean(np.square(y_pred_y - y_true_y)) == 0:
+        mean = 1
+        return 20.0 * np.log(255.0) / np.log(10.0) - 10.0 * np.log(mean) / np.log(10.0)
+    else:
+        return 20.0 * np.log(255.0) / np.log(10.0) - 10.0 * np.log(np.mean(np.square(y_pred_y - y_true_y))) / np.log(10.0)
     # return 20.0 * np.log(255.0) / np.log(10.0) - 10.0 * np.log(np.mean(np.square(y_pred - y_true))) / np.log(10.0)
 
 def wait():

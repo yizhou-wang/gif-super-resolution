@@ -40,6 +40,7 @@ def gen_hr_lr(in_dir='../data/raw_imgs/', tag='face', number='999', hr_dir='../d
 
     jpg_list = glob.glob(img_dir + '*.jpg')
     jpg_list.sort(key=lambda f: int(filter(str.isdigit, f)))
+    # jpg_list = jpg_list[:10]
     for jpg in jpg_list:
         im1 = Image.open(jpg)
         im2 = im1.resize(hr).convert('RGB')
@@ -50,7 +51,7 @@ def gen_hr_lr(in_dir='../data/raw_imgs/', tag='face', number='999', hr_dir='../d
         im3.save(q2)
 
 def load_lr_gif(dir='../data/lr_imgs/', tag='face', number='999', reso=8, channel=3):
-    print 'lr_path =', dir + tag + '/' + number + '/*.jpg'
+    # print 'lr_path =', dir + tag + '/' + number + '/*.jpg'
     lr_list = glob.glob(dir + tag + '/' + number + '/*.jpg')
     lr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     # print lr_list
@@ -63,7 +64,7 @@ def load_lr_gif(dir='../data/lr_imgs/', tag='face', number='999', reso=8, channe
     return data_lr_gif
 
 def load_hr_gif(dir='../data/hr_imgs/', tag='face', number='999', reso=32, channel=3):
-    print 'hr_path =', dir + tag + '/' + number + '/*.jpg'
+    # print 'hr_path =', dir + tag + '/' + number + '/*.jpg'
     hr_list = glob.glob(dir + tag + '/' + number + '/*.jpg')
     hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     # print hr_list
@@ -76,7 +77,7 @@ def load_hr_gif(dir='../data/hr_imgs/', tag='face', number='999', reso=32, chann
     return data_hr_gif
 
 def load_fl_frame(dir='../data/hr_imgs/', tag='face', number='999', reso=32, channel=3):
-    print 'hr_path =', dir + tag + '/' + number + '/*.jpg'
+    # print 'hr_path =', dir + tag + '/' + number + '/*.jpg'
     hr_list = glob.glob(dir + tag + '/' + number + '/*.jpg')
     hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     # print hr_list
@@ -108,7 +109,7 @@ def bicu_inter(in_dir='../data/lr_imgs/', tag='face', number='999', out_dir='../
         cv2.imwrite(q, im2)
 
 def load_bi_gif(dir='../data/bi_imgs/', tag='face', number='999',reso=32, channel=3):
-    print 'bi_path =', dir + tag + '/' + number + '/*.jpg'
+    # print 'bi_path =', dir + tag + '/' + number + '/*.jpg'
     bi_list = glob.glob(dir + tag + '/' + number + '/*.jpg')
     bi_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     # print bi_list
@@ -155,14 +156,14 @@ def img2gif(in_dir='../data/rc_imgs/', tag='face', number='999', out_dir='../dat
 def savemat(hr_dir='../data/hr_imgs/', lr_dir='../data/lr_imgs/', tag='face', number='999', out_dir='../data/mats/', reso=(32, 8), channel=3):
     hr = reso[0]
     lr = reso[1]
-    print 'lr_path =', lr_dir + tag + '/' + number + '/*.jpg'
+    # print 'lr_path =', lr_dir + tag + '/' + number + '/*.jpg'
     lr_list = glob.glob(lr_dir + tag + '/' + number + '/*.jpg')
     lr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     data_lr_gif = np.zeros((lr, lr, len(lr_list)))
     for idx, lr_img in enumerate(lr_list):
         im = scipy.ndimage.imread(lr_img, mode='L')
         data_lr_gif[:, :, idx] = im
-    print 'hr_path =', hr_dir + tag + '/' + number + '/*.jpg'
+    # print 'hr_path =', hr_dir + tag + '/' + number + '/*.jpg'
     hr_list = glob.glob(hr_dir + tag + '/' + number + '/*.jpg')
     hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     data_hr_gif = np.zeros((hr, hr, 1, len(hr_list)))
