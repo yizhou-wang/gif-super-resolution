@@ -55,7 +55,7 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
     # data_lr_gif = load_lr_gif(dir='../../data/lr_imgs/', number=number, reso=lr)
     # print 'data_lr_gif =', data_lr_gif.shape
     data_hr_gif = load_hr_gif(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
-    # print 'data_hr_gif =', data_hr_gif.shape
+    frame_num = data_hr_gif.shape[0]
     data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
     # print 'data_fl_frame =', data_fl_frame.shape
     savemat(hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../data/mats/', reso=(hr, lr))
@@ -114,7 +114,7 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
     img2gif(in_dir='../../data/bi_imgs/', tag=tag, number=number, out_dir='../../data/bi_gifs/')
     print 'GIF saved!'
 
-    return total_bi_psnr, total_psnr
+    return frame_num, total_bi_psnr, total_psnr
 
 
 if __name__ == '__main__':
@@ -134,8 +134,4 @@ if __name__ == '__main__':
     channel = int(args.channel)
 
     main(tag, number, hr, lr, channel)
-
-
-
-
 
