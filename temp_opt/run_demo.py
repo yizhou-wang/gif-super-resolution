@@ -45,7 +45,7 @@ print 'Mean of Frame NUM: ', np.mean(frame_num)
 print 'Mean of BI PSNR:', np.mean(total_bi_psnr)
 print 'Mean of Our PSNR:', np.mean(total_psnr) 
 
-filename = '../data/final.mat'
+filename = '../../data/final.mat'
 scipy.io.savemat(filename, mdict={'frame_num': frame_num, 'total_bi_psnr': total_bi_psnr, 'total_psnr': total_psnr}) 
 # print choose_gif
 # thefile.close()
