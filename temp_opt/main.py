@@ -30,7 +30,7 @@ def GD(data_bi_gif, data_fl_frame, params, step_size, numIterations, data_hr_gif
     return params
 
 def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIterations=100):
-    print '******************************'
+    print '\n******************************'
     print 'Parameters:'
     print '    tag:    \t', tag
     print '    number: \t', number
