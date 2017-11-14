@@ -56,9 +56,11 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
     # print 'data_lr_gif =', data_lr_gif.shape
     data_hr_gif = load_hr_gif(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
     frame_num = data_hr_gif.shape[0]
+    if not frame_num > 5 and frame_num < 400:
+        return frame_num, 0, 0
+
     data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
-    # print 'data_fl_frame =', data_fl_frame.shape
-    savemat(hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../data/mats/', reso=(hr, lr))
+    # savemat(hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../data/mats/', reso=(hr, lr))
 
     '''
     Step 3: BI on each frame.
