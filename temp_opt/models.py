@@ -4,6 +4,7 @@ def get_loss_gradiant(frame_num, params, data_fl_frame, data_bi_gif):
     n = frame_num
     rho = params[0]
     gamma = params[1]
+    # print np.mean(rho)
     # print 'LG:', params.shape
     # print 'LG:', rho.shape
     # print 'LG:', gamma.shape

@@ -60,7 +60,7 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
         return frame_num, 0, 0
 
     data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
-    # savemat(hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../data/mats/', reso=(hr, lr))
+    # savemat(hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../result/mats/', reso=(hr, lr))
 
     '''
     Step 3: BI on each frame.
@@ -71,6 +71,7 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
     bicu_inter(in_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../data/bi_imgs/', reso=(hr, lr))
     data_bi_gif = load_bi_gif(dir='../../data/bi_imgs/', tag=tag, number=number, reso=hr)
     # print 'data_bi_gif =', data_bi_gif.shape
+
 
     '''
     Step 4: Optimization.
@@ -98,8 +99,8 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
     data_rc_gif = recover_gif(data_bi_gif, data_fl_frame, mat_params_res, keep_fl=True, use_iter=False)
     print("Recovering completed! Time consumed: %.8s s" % ((time.time() - start_time)))
     total_bi_loss = gif_norm(data_bi_gif - data_hr_gif, True)
-    total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
     total_bi_psnr = PSNR(data_hr_gif, data_bi_gif)
+    total_loss = gif_norm(data_rc_gif - data_hr_gif, True)
     total_psnr = PSNR(data_hr_gif, data_rc_gif)
     print("Total_loss: %f / %f | PSNR: %f / %f" % (total_bi_loss, total_loss, total_bi_psnr, total_psnr))
     # if total_bi_psnr > total_psnr:
@@ -120,6 +121,7 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
 
 
 if __name__ == '__main__':
+    # Example: python main.py -t animation -n 4014 -hr 128 -lr 32
 
     # Choose a GIF for test
     parser = ArgumentParser()

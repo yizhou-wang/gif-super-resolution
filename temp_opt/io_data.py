@@ -160,20 +160,38 @@ def savemat(hr_dir='../data/hr_imgs/', lr_dir='../data/lr_imgs/', tag='face', nu
     lr_list = glob.glob(lr_dir + tag + '/' + number + '/*.jpg')
     lr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     data_lr_gif = np.zeros((lr, lr, len(lr_list)))
+    data_lr_gif_1 = np.zeros((lr, lr, len(lr_list)))
+    data_lr_gif_2 = np.zeros((lr, lr, len(lr_list)))
     for idx, lr_img in enumerate(lr_list):
-        im = scipy.ndimage.imread(lr_img, mode='L')
-        data_lr_gif[:, :, idx] = im
+        # im = scipy.ndimage.imread(lr_img, mode='L')
+        im = scipy.ndimage.imread(lr_img)
+        data_lr_gif[:, :, idx] = im[:,:,0]
+        data_lr_gif_1[:, :, idx] = im[:,:,1]
+        data_lr_gif_2[:, :, idx] = im[:,:,2]
     # print 'hr_path =', hr_dir + tag + '/' + number + '/*.jpg'
     hr_list = glob.glob(hr_dir + tag + '/' + number + '/*.jpg')
     hr_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     data_hr_gif = np.zeros((hr, hr, 1, len(hr_list)))
+    data_hr_gif_1 = np.zeros((hr, hr, 1, len(hr_list)))
+    data_hr_gif_2 = np.zeros((hr, hr, 1, len(hr_list)))
     for idx, hr_img in enumerate(hr_list):
-        im = scipy.ndimage.imread(hr_img, mode='L')
-        data_hr_gif[:, :, 0, idx] = im
+        # im = scipy.ndimage.imread(hr_img, mode='L')
+        im = scipy.ndimage.imread(hr_img)
+        data_hr_gif[:, :, 0, idx] = im[:,:,0]
+        data_hr_gif_1[:, :, 0, idx] = im[:,:,1]
+        data_hr_gif_2[:, :, 0, idx] = im[:,:,2]
     data_lr_gif = data_lr_gif / 255.0
     data_hr_gif = data_hr_gif / 255.0
+    data_lr_gif_1 = data_lr_gif_1 / 255.0
+    data_hr_gif_1 = data_hr_gif_1 / 255.0
+    data_lr_gif_2 = data_lr_gif_2 / 255.0
+    data_hr_gif_2 = data_hr_gif_2 / 255.0
 
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-    filename = out_dir + 'test_' + number + '.mat'
+    if not os.path.exists(out_dir + tag + '/' + number):
+        os.makedirs(out_dir + tag + '/' + number)
+    filename = out_dir + tag + '/' + number + '/' + number + '_R.mat'
     scipy.io.savemat(filename, mdict={'frames': data_lr_gif, 'im_gt': data_hr_gif})
+    filename = out_dir + tag + '/' + number + '/' + number + '_G.mat'
+    scipy.io.savemat(filename, mdict={'frames': data_lr_gif_1, 'im_gt': data_hr_gif_1})
+    filename = out_dir + tag + '/' + number + '/' + number + '_B.mat'
+    scipy.io.savemat(filename, mdict={'frames': data_lr_gif_2, 'im_gt': data_hr_gif_2})
