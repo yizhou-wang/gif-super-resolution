@@ -42,9 +42,9 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
     Step 1: Extract frames.
     '''
     print 'Extract frames ...'
-    gif2img(in_dir='../../data/raw_gifs/', tag=tag, number=number, out_dir='../../data/raw_imgs/')
+    gif2img(in_dir='../data/raw_gifs/', tag=tag, number=number, out_dir='../data/raw_imgs/')
     print 'Gerate HR & LR ...'
-    gen_hr_lr(in_dir='../../data/raw_imgs/', tag=tag, number=number, hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', reso=(hr, lr))
+    gen_hr_lr(in_dir='../data/raw_imgs/', tag=tag, number=number, hr_dir='../data/hr_imgs/', lr_dir='../data/lr_imgs/', reso=(hr, lr))
 
     '''
     Step 2: Read images.
@@ -54,12 +54,12 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
     '''
     # data_lr_gif = load_lr_gif(dir='../../data/lr_imgs/', number=number, reso=lr)
     # print 'data_lr_gif =', data_lr_gif.shape
-    data_hr_gif = load_hr_gif(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
+    data_hr_gif = load_hr_gif(dir='../data/hr_imgs/', tag=tag, number=number, reso=hr)
     frame_num = data_hr_gif.shape[0]
     if not frame_num > 5 and frame_num < 400:
         return frame_num, 0, 0
 
-    data_fl_frame = load_fl_frame(dir='../../data/hr_imgs/', tag=tag, number=number, reso=hr)
+    data_fl_frame = load_fl_frame(dir='../data/hr_imgs/', tag=tag, number=number, reso=hr)
     # savemat(hr_dir='../../data/hr_imgs/', lr_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../result/mats/', reso=(hr, lr))
 
     '''
@@ -68,8 +68,8 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
         'bi_loss':      loss of the bicubic interpolation
     '''
     print 'Bicubic interpolation ...'
-    bicu_inter(in_dir='../../data/lr_imgs/', tag=tag, number=number, out_dir='../../data/bi_imgs/', reso=(hr, lr))
-    data_bi_gif = load_bi_gif(dir='../../data/bi_imgs/', tag=tag, number=number, reso=hr)
+    bicu_inter(in_dir='../data/lr_imgs/', tag=tag, number=number, out_dir='../data/bi_imgs/', reso=(hr, lr))
+    data_bi_gif = load_bi_gif(dir='../data/bi_imgs/', tag=tag, number=number, reso=hr)
     # print 'data_bi_gif =', data_bi_gif.shape
 
 
@@ -110,11 +110,11 @@ def main(tag='yizhou', number='0', hr=32, lr=8, channel=3, step_size=1e-8, numIt
     Step 6: Save GIF.
     '''    
     data_rc_gif_out = toimg(data_rc_gif)
-    save_frames(gif=data_rc_gif_out, dir='../../data/rc_imgs/', tag=tag, number=number)
+    save_frames(gif=data_rc_gif_out, dir='../data/rc_imgs/', tag=tag, number=number)
     print 'Frames saved!'
-    img2gif(in_dir='../../data/hr_imgs/', tag=tag, number=number, out_dir='../../data/hr_gifs/')
-    img2gif(in_dir='../../data/rc_imgs/', tag=tag, number=number, out_dir='../../data/rc_gifs/')
-    img2gif(in_dir='../../data/bi_imgs/', tag=tag, number=number, out_dir='../../data/bi_gifs/')
+    img2gif(in_dir='../data/hr_imgs/', tag=tag, number=number, out_dir='../data/hr_gifs/')
+    img2gif(in_dir='../data/rc_imgs/', tag=tag, number=number, out_dir='../data/rc_gifs/')
+    img2gif(in_dir='../data/bi_imgs/', tag=tag, number=number, out_dir='../data/bi_gifs/')
     print 'GIF saved!'
 
     return frame_num, total_bi_psnr, total_psnr

@@ -1,5 +1,0 @@
-*.pyc
-samples/*
-models/*
-data/*
-tools/*.pyc
